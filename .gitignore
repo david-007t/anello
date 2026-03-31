@@ -1,0 +1,33 @@
+# Python
+.env
+credentials.json
+token.json
+linkedin_session/
+logs/
+*.pdf
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Sensitive data
+resume_db.json
+seen_jobs.json
+tailored/
+reddit_cover_letter.json
+
+# Next.js / web
+web/node_modules/
+web/.next/
+web/.env.local
+web/.env*.local
+web/out/
+web/.vercel/
+
+# General
+.DS_Store
+*.log
+.omc/
+.claude/
+.continue-here.md
+HANDOFF.md
