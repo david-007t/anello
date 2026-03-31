@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  const { error } = await supabaseAdmin
+  const { error } = await supabaseAdmin()
     .from("preferences")
     .upsert({ user_id: userId, ...body, updated_at: new Date().toISOString() });
 
@@ -21,7 +21,7 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin()
     .from("preferences")
     .select("*")
     .eq("user_id", userId)

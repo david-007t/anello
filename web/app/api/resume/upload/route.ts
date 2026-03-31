@@ -23,14 +23,14 @@ export async function POST(req: NextRequest) {
   const bytes = await file.arrayBuffer();
   const path = `${userId}/${Date.now()}-${file.name}`;
 
-  const { error: uploadError } = await supabaseAdmin.storage
+  const { error: uploadError } = await supabaseAdmin().storage
     .from("resumes")
     .upload(path, bytes, { contentType: file.type, upsert: true });
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
 
   // Record in DB
-  await supabaseAdmin.from("resumes").upsert({
+  await supabaseAdmin().from("resumes").upsert({
     user_id: userId,
     file_path: path,
     file_name: file.name,
