@@ -131,10 +131,15 @@ def tailor_endpoint(req: TailorRequest):
     # 5. Upload PDF to Supabase storage
     storage_path = f"{req.user_id}/tailored-{req.job_id}.pdf"
     try:
+        # Remove existing file first to avoid 400 on duplicate upload
+        try:
+            db.storage.from_("tailored-resumes").remove([storage_path])
+        except Exception:
+            pass
         db.storage.from_("tailored-resumes").upload(
             storage_path,
             pdf_bytes,
-            {"content-type": "application/pdf", "upsert": "true"},
+            {"content-type": "application/pdf"},
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {e}")
