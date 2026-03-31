@@ -1,10 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
 
 const PIPELINE_URL = process.env.PIPELINE_URL ?? "";
-const OWNER_ID = "user_3BiDX7oXc0OkkXgLwwCIWK4VMu0";
-const RESUME_LIMIT = 3;
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -17,19 +14,7 @@ export async function POST(req: Request) {
   const { job_id } = await req.json();
   if (!job_id) return NextResponse.json({ error: "job_id required" }, { status: 400 });
 
-  // Check storage limit for non-owner users
-  if (userId !== OWNER_ID) {
-    const supabase = supabaseAdmin();
-    const { data: files } = await supabase.storage.from("tailored-resumes").list(userId);
-    if (files && files.length >= RESUME_LIMIT) {
-      return NextResponse.json(
-        { error: "Resume limit reached (3 max). Delete a saved resume to continue." },
-        { status: 403 }
-      );
-    }
-  }
-
-  const res = await fetch(`${PIPELINE_URL}/tailor`, {
+  const res = await fetch(`${PIPELINE_URL}/cover-letter`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ job_id, user_id: userId }),

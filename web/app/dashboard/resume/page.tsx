@@ -2,11 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 
+interface TailoredResume {
+  name: string;
+  url: string | null;
+  created_at: string;
+}
+
 export default function ResumePage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "uploading" | "done" | "error">("loading");
   const [error, setError] = useState("");
+  const [tailored, setTailored] = useState<TailoredResume[]>([]);
+  const [tailoredLoading, setTailoredLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/resume")
@@ -16,7 +24,27 @@ export default function ResumePage() {
         setStatus("idle");
       })
       .catch(() => setStatus("idle"));
+
+    loadTailored();
   }, []);
+
+  function loadTailored() {
+    setTailoredLoading(true);
+    fetch("/api/tailored-resumes")
+      .then((r) => r.json())
+      .then(({ resumes }) => setTailored(resumes ?? []))
+      .catch(() => setTailored([]))
+      .finally(() => setTailoredLoading(false));
+  }
+
+  async function handleDelete(name: string) {
+    const res = await fetch("/api/tailored-resumes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) loadTailored();
+  }
 
   async function handleFile(file: File) {
     setStatus("uploading");
@@ -90,6 +118,50 @@ export default function ResumePage() {
         )}
 
         {status === "error" && <p className="mt-3 text-sm text-red-500">{error}</p>}
+      </div>
+
+      {/* Tailored Resumes */}
+      <div className="mt-10 max-w-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-slate-900">Tailored Resumes</h2>
+          {!tailoredLoading && (
+            <span className="text-xs text-slate-400">{tailored.length} / 3 saved</span>
+          )}
+        </div>
+
+        {tailoredLoading ? (
+          <p className="text-sm text-slate-400">Loading…</p>
+        ) : tailored.length === 0 ? (
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 text-center">
+            <p className="text-sm text-slate-400">No tailored resumes yet. Use "Tailor Resume" on a job in your digest.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {tailored.map((r) => (
+              <div key={r.name} className="bg-white border border-slate-100 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+                <span className="text-sm text-slate-700 truncate">{r.name}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  {r.url && (
+                    <a
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                    >
+                      Download
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleDelete(r.name)}
+                    className="text-xs font-medium text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

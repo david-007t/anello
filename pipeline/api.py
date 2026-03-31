@@ -23,6 +23,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from tailor import tailor_resume
 from resume_to_pdf import parse_resume_md, md_to_html_resume
+from cover_letter import generate_cover_letter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -162,6 +163,60 @@ def tailor_endpoint(req: TailorRequest):
         "pdf_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
         "filename": filename,
         "job_id": req.job_id,
+    }
+
+
+class CoverLetterRequest(BaseModel):
+    job_id: str
+    user_id: str
+
+
+@app.post("/cover-letter")
+def cover_letter_endpoint(req: CoverLetterRequest):
+    db = get_db()
+
+    # 1. Fetch job
+    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
+    if not job_res.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = job_res.data[0]
+
+    job_for_gen = {
+        "title": job.get("role", ""),
+        "company": job.get("company", ""),
+        "description": job.get("description", ""),
+    }
+
+    # 2. Fetch user's resume
+    resume_res = (
+        db.table("resumes")
+        .select("file_path,file_name")
+        .eq("user_id", req.user_id)
+        .order("uploaded_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not resume_res.data:
+        raise HTTPException(status_code=404, detail="No resume found for user")
+
+    resume_path = resume_res.data[0]["file_path"]
+    try:
+        file_bytes = db.storage.from_("resumes").download(resume_path)
+        import io
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(file_bytes))
+        resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
+
+    # 3. Generate cover letter
+    text = generate_cover_letter(resume_text, job_for_gen)
+
+    return {
+        "cover_letter": text,
+        "job_id": req.job_id,
+        "role": job.get("role", ""),
+        "company": job.get("company", ""),
     }
 
 
