@@ -136,7 +136,7 @@ def tailor_endpoint(req: TailorRequest):
     # 5. Return PDF directly as base64 — skip storage entirely
     return {
         "pdf_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
-        "filename": f"tailored-resume-{req.job_id[:8]}.pdf",
+        "filename": f"{job.get('role','role').replace(' ','-')}-{job.get('company','company').replace(' ','-')}.pdf".lower(),
         "job_id": req.job_id,
     }
 
