@@ -104,7 +104,10 @@ def check_imports() -> None:
                     _check_importable(pkg, missing)
 
         if missing:
-            _record(_FAIL, f"import:{mod_name}", f"unresolvable: {', '.join(missing)}")
+            # Missing packages are only a FAIL if we have a .env (i.e. running in pipeline env).
+            # Outside the pipeline venv, third-party packages won't be installed locally.
+            level = _FAIL if _ENV_DOTFILE_EXISTS else _WARN
+            _record(level, f"import:{mod_name}", f"unresolvable: {', '.join(missing)}")
         else:
             _record(_PASS, f"import:{mod_name}", "all imports resolvable")
 
@@ -216,7 +219,8 @@ def check_supabase_tables() -> None:
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
     if not url or not key:
-        _record(_FAIL, "supabase:credentials", "SUPABASE_URL/SERVICE_ROLE_KEY not set — skipping table check")
+        level = _FAIL if _ENV_DOTFILE_EXISTS else _WARN
+        _record(level, "supabase:credentials", "SUPABASE_URL/SERVICE_ROLE_KEY not set — skipping table check")
         return
 
     try:
@@ -253,7 +257,8 @@ def check_anthropic_key() -> None:
     print("\n-- Anthropic API key --")
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
-        _record(_FAIL, "anthropic:key", "ANTHROPIC_API_KEY not set")
+        level = _FAIL if _ENV_DOTFILE_EXISTS else _WARN
+        _record(level, "anthropic:key", "ANTHROPIC_API_KEY not set — unverifiable without local credentials")
         return
 
     try:
@@ -299,6 +304,9 @@ _REQUIRED_VARS = [
 ]
 
 
+_ENV_DOTFILE_EXISTS = (_PIPELINE_DIR / ".env").exists()
+
+
 def check_env_vars() -> None:
     print("\n-- Required env vars --")
     for group in _REQUIRED_VARS:
@@ -306,15 +314,19 @@ def check_env_vars() -> None:
             var = group[0]
             if os.environ.get(var):
                 _record(_PASS, f"env:{var}", "set")
-            else:
+            elif _ENV_DOTFILE_EXISTS:
+                # .env exists but var is missing — that's a real gap
                 _record(_FAIL, f"env:{var}", "not set or empty")
+            else:
+                _record(_WARN, f"env:{var}", "not set locally (Railway secret — unverifiable here)")
         else:
-            # Any one of the group satisfies the requirement
             found = [v for v in group if os.environ.get(v)]
             if found:
                 _record(_PASS, f"env:{'|'.join(group)}", f"set via {found[0]}")
-            else:
+            elif _ENV_DOTFILE_EXISTS:
                 _record(_FAIL, f"env:{'|'.join(group)}", f"none of {list(group)} are set")
+            else:
+                _record(_WARN, f"env:{'|'.join(group)}", "not set locally (Railway secret — unverifiable here)")
 
 
 # ---------------------------------------------------------------------------
