@@ -9,6 +9,7 @@ import os
 import logging
 import tempfile
 import base64
+import httpx
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -133,10 +134,33 @@ def tailor_endpoint(req: TailorRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
 
-    # 5. Return PDF directly as base64 — skip storage entirely
+    # 5. Save to Supabase storage via REST API directly (supabase-py upload returns 400)
+    role_slug = (job.get("role") or "resume").replace(" ", "-").lower()
+    company_slug = (job.get("company") or "company").replace(" ", "-").lower()
+    filename = f"{role_slug}-{company_slug}.pdf"
+    storage_path = f"{req.user_id}/{filename}"
+
+    try:
+        storage_url = f"{SUPABASE_URL}/storage/v1/object/tailored-resumes/{storage_path}"
+        upload_res = httpx.put(
+            storage_url,
+            content=pdf_bytes,
+            headers={
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/pdf",
+                "x-upsert": "true",
+            },
+            timeout=30,
+        )
+        if upload_res.status_code not in (200, 201):
+            logger.error(f"Storage upload failed: {upload_res.status_code} {upload_res.text}")
+    except Exception as e:
+        logger.error(f"Storage upload error: {e}")
+
+    # Always return PDF as base64 for immediate download
     return {
         "pdf_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
-        "filename": f"{job.get('role','role').replace(' ','-')}-{job.get('company','company').replace(' ','-')}.pdf".lower(),
+        "filename": filename,
         "job_id": req.job_id,
     }
 
