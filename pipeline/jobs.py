@@ -27,15 +27,20 @@ def fetch_jobs(prefs: dict, max_results: int = 20) -> list[dict]:
     min_salary = prefs.get("min_salary")
     country = "us"  # default — can extend later
 
+    # Adzuna "where" is geographic — "Remote" is not a valid location.
+    # For remote searches, append "remote" to the keyword query instead.
+    is_remote = location.lower() == "remote" if location else False
+    what_query = f"{role} remote" if is_remote else role
+
     params = {
         "app_id": ADZUNA_APP_ID,
         "app_key": ADZUNA_API_KEY,
         "results_per_page": min(max_results, 50),
-        "what": role,
+        "what": what_query,
         "content-type": "application/json",
     }
 
-    if location:
+    if location and not is_remote:
         params["where"] = location
     if min_salary:
         try:
