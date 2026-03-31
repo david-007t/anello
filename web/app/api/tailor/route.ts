@@ -14,14 +14,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "PIPELINE_URL not configured" }, { status: 500 });
   }
 
-  const { job_id } = await req.json();
+  const { job_id, job_number } = await req.json();
   if (!job_id) return NextResponse.json({ error: "job_id required" }, { status: 400 });
 
-  // Check storage limit for non-owner users
+  // Storage limit check (skip for owner)
   if (userId !== OWNER_ID) {
-    const supabase = supabaseAdmin();
-    const { data: files } = await supabase.storage.from("tailored-resumes").list(userId);
-    if (files && files.length >= RESUME_LIMIT) {
+    const { data: files } = await supabaseAdmin().storage.from("tailored-resumes").list(userId);
+    const resumeCount = (files ?? []).filter((f) => !f.name.endsWith("-cover-letter.pdf")).length;
+    if (resumeCount >= RESUME_LIMIT) {
       return NextResponse.json(
         { error: "Resume limit reached (3 max). Delete a saved resume to continue." },
         { status: 403 }
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const res = await fetch(`${PIPELINE_URL}/tailor`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ job_id, user_id: userId }),
+    body: JSON.stringify({ job_id, user_id: userId, job_number: job_number ?? 0 }),
   });
 
   if (!res.ok) {

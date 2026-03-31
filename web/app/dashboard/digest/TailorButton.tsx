@@ -1,111 +1,95 @@
 "use client";
 import { useState } from "react";
 
-export default function TailorButton({ jobId }: { jobId: string }) {
-  const [tailorState, setTailorState] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [coverState, setCoverState] = useState<"idle" | "loading" | "error">("idle");
-  const [coverText, setCoverText] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+interface TailorResult {
+  resume_pdf_base64: string;
+  cover_letter_pdf_base64: string;
+  resume_filename: string;
+  cover_letter_filename: string;
+}
 
-  async function handleTailor() {
-    setTailorState("loading");
+function downloadPdf(base64: string, filename: string) {
+  const blob = new Blob(
+    [Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))],
+    { type: "application/pdf" }
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function TailorButton({ jobId, jobNumber }: { jobId: string; jobNumber: number }) {
+  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [result, setResult] = useState<TailorResult | null>(null);
+  const [coverLoading, setCoverLoading] = useState(false);
+
+  async function fetchTailor(): Promise<TailorResult | null> {
+    if (result) return result;
+    setState("loading");
     try {
       const res = await fetch("/api/tailor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id: jobId }),
+        body: JSON.stringify({ job_id: jobId, job_number: jobNumber }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      const { pdf_base64, filename } = await res.json();
-      const blob = new Blob([Uint8Array.from(atob(pdf_base64), c => c.charCodeAt(0))], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      setTailorState("done");
-    } catch {
-      setTailorState("error");
-    } finally {
-      setTimeout(() => setTailorState("idle"), 3000);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed");
+      }
+      const data: TailorResult = await res.json();
+      setResult(data);
+      setState("done");
+      return data;
+    } catch (e: unknown) {
+      setState("error");
+      setTimeout(() => setState("idle"), 4000);
+      return null;
     }
+  }
+
+  async function handleResume() {
+    const data = await fetchTailor();
+    if (data) downloadPdf(data.resume_pdf_base64, data.resume_filename);
   }
 
   async function handleCoverLetter() {
-    setCoverState("loading");
-    try {
-      const res = await fetch("/api/cover-letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id: jobId }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const { cover_letter } = await res.json();
-      setCoverText(cover_letter);
-      setCoverState("idle");
-    } catch {
-      setCoverState("error");
-      setTimeout(() => setCoverState("idle"), 3000);
+    if (result) {
+      downloadPdf(result.cover_letter_pdf_base64, result.cover_letter_filename);
+      return;
     }
+    setCoverLoading(true);
+    const data = await fetchTailor();
+    setCoverLoading(false);
+    if (data) downloadPdf(data.cover_letter_pdf_base64, data.cover_letter_filename);
   }
 
-  function handleCopy() {
-    if (coverText) {
-      navigator.clipboard.writeText(coverText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }
+  const tailorLabel =
+    state === "loading" ? "Tailoring…" :
+    state === "done" ? "Resume ✓" :
+    state === "error" ? "Failed" :
+    "Tailor Resume";
+
+  const coverLabel = coverLoading ? "Generating…" : "Cover Letter";
 
   return (
-    <>
-      <div className="mt-2 flex items-center gap-2">
-        <button
-          onClick={handleTailor}
-          disabled={tailorState === "loading"}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors whitespace-nowrap"
-        >
-          {tailorState === "loading" ? "Tailoring…" : tailorState === "done" ? "Downloaded ✓" : tailorState === "error" ? "Failed" : "Tailor Resume"}
-        </button>
-
-        <button
-          onClick={handleCoverLetter}
-          disabled={coverState === "loading"}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50 transition-colors whitespace-nowrap"
-        >
-          {coverState === "loading" ? "Generating…" : coverState === "error" ? "Failed" : "Cover Letter"}
-        </button>
-      </div>
-
-      {/* Cover letter modal */}
-      {coverText && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900">Cover Letter</h2>
-              <button
-                onClick={() => setCoverText(null)}
-                className="text-slate-400 hover:text-slate-600 text-sm"
-              >
-                Close
-              </button>
-            </div>
-            <textarea
-              readOnly
-              value={coverText}
-              rows={12}
-              className="w-full border border-slate-200 rounded-xl p-4 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-brand-300"
-            />
-            <button
-              onClick={handleCopy}
-              className="self-end px-4 py-2 text-sm font-semibold bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition"
-            >
-              {copied ? "Copied ✓" : "Copy to clipboard"}
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="mt-2 flex items-center gap-2">
+      <button
+        onClick={handleResume}
+        disabled={state === "loading" || coverLoading}
+        className="text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+      >
+        {tailorLabel}
+      </button>
+      <button
+        onClick={handleCoverLetter}
+        disabled={state === "loading" || coverLoading}
+        className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+      >
+        {coverLabel}
+      </button>
+    </div>
   );
 }

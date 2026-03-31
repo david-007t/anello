@@ -53,7 +53,7 @@ export default async function DigestPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 max-w-2xl">
-          {jobs.map((job) => (
+          {jobs.map((job, index) => (
             <div key={job.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -76,7 +76,7 @@ export default async function DigestPage() {
                 {job.salary_range && (
                   <p className="text-xs text-slate-500 mt-0.5">{job.salary_range}</p>
                 )}
-                <TailorButton jobId={job.id} />
+                <TailorButton jobId={job.id} jobNumber={index + 1} />
               </div>
               <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5">
                 {formatDate(job.matched_at)}

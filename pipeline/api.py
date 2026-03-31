@@ -1,7 +1,7 @@
 """
 api.py — FastAPI HTTP server for on-demand pipeline operations.
 Endpoints:
-  POST /tailor  — tailor resume for a specific job, return PDF download URL
+  POST /tailor  — tailor resume + cover letter for a specific job, return PDF downloads
   POST /run     — trigger full pipeline run (for cron)
   GET  /health  — health check
 """
@@ -9,6 +9,7 @@ import os
 import logging
 import tempfile
 import base64
+import html as html_lib
 import httpx
 from pathlib import Path
 
@@ -21,9 +22,8 @@ from pydantic import BaseModel
 from supabase import create_client
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from tailor import tailor_resume
+from tailor import tailor_job, tailor_resume
 from resume_to_pdf import parse_resume_md, md_to_html_resume
-from cover_letter import generate_cover_letter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -59,9 +59,43 @@ def get_db():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
+def _cover_letter_to_html(text: str) -> str:
+    escaped = html_lib.escape(text)
+    # Preserve paragraphs
+    paragraphs = escaped.split("\n\n")
+    paras_html = "".join(f"<p>{p.replace(chr(10), '<br>')}</p>" for p in paragraphs if p.strip())
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {{ font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.7; color: #1a1a1a; max-width: 680px; margin: 60px auto; padding: 0 40px; }}
+  p {{ margin: 0 0 1.2em 0; }}
+</style>
+</head>
+<body>{paras_html}</body>
+</html>"""
+
+
+def _inject_summary(resume_markdown: str, fit_summary: str) -> str:
+    """Inject fit_summary after the second non-empty line (contact line), before WORK EXPERIENCE."""
+    lines = resume_markdown.split("\n")
+    non_empty_count = 0
+    insert_idx = len(lines)
+    for i, line in enumerate(lines):
+        if line.strip():
+            non_empty_count += 1
+            if non_empty_count == 2:
+                insert_idx = i + 1
+                break
+    lines.insert(insert_idx, f"\nSUMMARY: {fit_summary}\n")
+    return "\n".join(lines)
+
+
 class TailorRequest(BaseModel):
     job_id: str
     user_id: str
+    job_number: int = 0
 
 
 @app.get("/health")
@@ -79,7 +113,7 @@ def tailor_endpoint(req: TailorRequest):
         raise HTTPException(status_code=404, detail="Job not found")
     job = job_res.data[0]
 
-    # Map digest_jobs columns to what tailor_resume expects
+    # Map digest_jobs columns to what tailor_job expects
     job_for_tailor = {
         "title": job.get("role", ""),
         "company": job.get("company", ""),
@@ -101,7 +135,6 @@ def tailor_endpoint(req: TailorRequest):
     resume_path = resume_res.data[0]["file_path"]
     try:
         file_bytes = db.storage.from_("resumes").download(resume_path)
-        # Extract text from PDF bytes
         import io
         from pypdf import PdfReader
         reader = PdfReader(io.BytesIO(file_bytes))
@@ -109,114 +142,101 @@ def tailor_endpoint(req: TailorRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
 
-    # 3. Tailor resume text via Anthropic
-    tailored_text = tailor_resume(resume_text, job_for_tailor)
+    # 3. Tailor resume + cover letter via Anthropic
+    tailor_result = tailor_job(resume_text, job_for_tailor)
+    resume_markdown = tailor_result.get("resume_markdown", resume_text)
+    cover_letter = tailor_result.get("cover_letter", "")
+    fit_summary = tailor_result.get("fit_summary", "")
 
-    # 4. Generate PDF from tailored text using Playwright
+    # Inject fit_summary into resume markdown
+    if fit_summary:
+        resume_markdown = _inject_summary(resume_markdown, fit_summary)
+
+    # 4. Build filenames
+    role_slug = (job.get("role") or "resume").replace(" ", "-").lower()
+    company_slug = (job.get("company") or "company").replace(" ", "-").lower()
+    if req.job_number > 0:
+        base_name = f"{req.job_number:02d}-{role_slug}-{company_slug}"
+    else:
+        base_name = f"{role_slug}-{company_slug}"
+    resume_filename = f"{base_name}.pdf"
+    cover_letter_filename = f"{base_name}-cover-letter.pdf"
+
+    # 5. Generate resume PDF via Playwright
     try:
         from playwright.sync_api import sync_playwright
 
-        parsed = parse_resume_md(tailored_text)
+        parsed = parse_resume_md(resume_markdown)
         html = md_to_html_resume(parsed)
 
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            tmp_path = tmp.name
+            resume_tmp_path = tmp.name
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.set_content(html, wait_until="networkidle")
-            page.pdf(path=tmp_path, format="A4", print_background=True, scale=0.88)
+            page.pdf(path=resume_tmp_path, format="A4", print_background=True, scale=0.88)
             browser.close()
 
-        pdf_bytes = Path(tmp_path).read_bytes()
-        Path(tmp_path).unlink(missing_ok=True)
+        resume_pdf_bytes = Path(resume_tmp_path).read_bytes()
+        Path(resume_tmp_path).unlink(missing_ok=True)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Resume PDF generation failed: {e}")
 
-    # 5. Save to Supabase storage via REST API directly (supabase-py upload returns 400)
-    role_slug = (job.get("role") or "resume").replace(" ", "-").lower()
-    company_slug = (job.get("company") or "company").replace(" ", "-").lower()
-    filename = f"{role_slug}-{company_slug}.pdf"
-    storage_path = f"{req.user_id}/{filename}"
-
+    # 6. Generate cover letter PDF via Playwright
     try:
-        storage_url = f"{SUPABASE_URL}/storage/v1/object/tailored-resumes/{storage_path}"
-        upload_res = httpx.put(
-            storage_url,
-            content=pdf_bytes,
-            headers={
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type": "application/pdf",
-                "x-upsert": "true",
-            },
-            timeout=30,
-        )
-        if upload_res.status_code not in (200, 201):
-            logger.error(f"Storage upload failed: {upload_res.status_code} {upload_res.text}")
+        from playwright.sync_api import sync_playwright
+
+        cover_html = _cover_letter_to_html(cover_letter)
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            cover_tmp_path = tmp.name
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.set_content(cover_html, wait_until="networkidle")
+            page.pdf(path=cover_tmp_path, format="A4", print_background=True, scale=0.88)
+            browser.close()
+
+        cover_pdf_bytes = Path(cover_tmp_path).read_bytes()
+        Path(cover_tmp_path).unlink(missing_ok=True)
+
     except Exception as e:
-        logger.error(f"Storage upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Cover letter PDF generation failed: {e}")
 
-    # Always return PDF as base64 for immediate download
+    # 7. Save both PDFs to Supabase storage via REST API
+    for pdf_bytes, filename in [
+        (resume_pdf_bytes, resume_filename),
+        (cover_pdf_bytes, cover_letter_filename),
+    ]:
+        storage_path = f"{req.user_id}/{filename}"
+        try:
+            storage_url = f"{SUPABASE_URL}/storage/v1/object/tailored-resumes/{storage_path}"
+            upload_res = httpx.put(
+                storage_url,
+                content=pdf_bytes,
+                headers={
+                    "Authorization": f"Bearer {SUPABASE_KEY}",
+                    "Content-Type": "application/pdf",
+                    "x-upsert": "true",
+                },
+                timeout=30,
+            )
+            if upload_res.status_code not in (200, 201):
+                logger.error(f"Storage upload failed for {filename}: {upload_res.status_code} {upload_res.text}")
+        except Exception as e:
+            logger.error(f"Storage upload error for {filename}: {e}")
+
+    # 8. Return both PDFs as base64
     return {
-        "pdf_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
-        "filename": filename,
+        "resume_pdf_base64": base64.b64encode(resume_pdf_bytes).decode("utf-8"),
+        "cover_letter_pdf_base64": base64.b64encode(cover_pdf_bytes).decode("utf-8"),
+        "resume_filename": resume_filename,
+        "cover_letter_filename": cover_letter_filename,
         "job_id": req.job_id,
-    }
-
-
-class CoverLetterRequest(BaseModel):
-    job_id: str
-    user_id: str
-
-
-@app.post("/cover-letter")
-def cover_letter_endpoint(req: CoverLetterRequest):
-    db = get_db()
-
-    # 1. Fetch job
-    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
-    if not job_res.data:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = job_res.data[0]
-
-    job_for_gen = {
-        "title": job.get("role", ""),
-        "company": job.get("company", ""),
-        "description": job.get("description", ""),
-    }
-
-    # 2. Fetch user's resume
-    resume_res = (
-        db.table("resumes")
-        .select("file_path,file_name")
-        .eq("user_id", req.user_id)
-        .order("uploaded_at", desc=True)
-        .limit(1)
-        .execute()
-    )
-    if not resume_res.data:
-        raise HTTPException(status_code=404, detail="No resume found for user")
-
-    resume_path = resume_res.data[0]["file_path"]
-    try:
-        file_bytes = db.storage.from_("resumes").download(resume_path)
-        import io
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(file_bytes))
-        resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
-
-    # 3. Generate cover letter
-    text = generate_cover_letter(resume_text, job_for_gen)
-
-    return {
-        "cover_letter": text,
-        "job_id": req.job_id,
-        "role": job.get("role", ""),
-        "company": job.get("company", ""),
     }
 
 
