@@ -4,5 +4,5 @@ buildCommand = "pip install -r pipeline/requirements.txt && playwright install c
 watchPatterns = ["pipeline/**", "requirements.txt"]
 
 [deploy]
-startCommand = "cd pipeline && uvicorn api:app --host 0.0.0.0 --port $PORT"
+startCommand = "cd pipeline && uvicorn api:app --host 0.0.0.0 --port 8000"
 restartPolicyType = "always"

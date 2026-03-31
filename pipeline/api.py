@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from tailor import tailor_resume
 from resume_to_pdf import parse_resume_md, md_to_html_resume
@@ -25,6 +26,20 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI()
+
+# Daily pipeline run at 14:00 UTC (replaces railway.toml cronSchedule)
+_scheduler = BackgroundScheduler()
+
+@app.on_event("startup")
+def start_scheduler():
+    from main import run
+    _scheduler.add_job(run, "cron", hour=14, minute=0, timezone="UTC")
+    _scheduler.start()
+    logger.info("Scheduler started — pipeline will run daily at 14:00 UTC")
+
+@app.on_event("shutdown")
+def stop_scheduler():
+    _scheduler.shutdown(wait=False)
 
 app.add_middleware(
     CORSMiddleware,
