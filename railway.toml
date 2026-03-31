@@ -1,8 +1,8 @@
 [build]
 builder = "nixpacks"
-watchPatterns = ["pipeline/**"]
+watchPatterns = ["pipeline/**", "requirements.txt"]
 
 [deploy]
-startCommand = "cd pipeline && pip install -r requirements.txt && python main.py"
+startCommand = "python pipeline/main.py"
 restartPolicyType = "on_failure"
 cronSchedule = "0 14 * * *"
