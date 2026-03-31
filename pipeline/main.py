@@ -122,11 +122,17 @@ def run():
             db.table("digest_jobs").insert(rows).execute()
             logger.info(f"Saved {len(rows)} jobs for user {user_id}")
 
-        # 6. Send digest email
-        # Look up user email from clerk via Supabase users table (if exists)
-        # For now, skip if no email mapping — will wire Clerk webhook later
-        user_email = prefs.get("email")
-        user_name = prefs.get("name", "")
+        # 6. Send digest email — look up email from users table
+        user_res = (
+            db.table("users")
+            .select("email,first_name")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        user_row = user_res.data[0] if user_res.data else {}
+        user_email = user_row.get("email", "")
+        user_name = user_row.get("first_name", "")
         if user_email:
             send_digest(user_email, user_name, ranked)
         else:

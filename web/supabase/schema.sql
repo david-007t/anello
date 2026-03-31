@@ -1,6 +1,15 @@
 -- Anelo Database Schema
 -- Run this in Supabase SQL Editor: Project → SQL Editor → New Query → paste + run
 
+-- Users (synced from Clerk via webhook)
+create table if not exists users (
+  id text primary key,
+  email text not null,
+  first_name text,
+  last_name text,
+  created_at timestamptz default now()
+);
+
 -- Resumes
 create table if not exists resumes (
   id uuid primary key default gen_random_uuid(),
