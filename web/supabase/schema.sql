@@ -14,14 +14,11 @@ create table if not exists resumes (
 create table if not exists preferences (
   id uuid primary key default gen_random_uuid(),
   user_id text not null unique,
-  title text,
+  role text,
   location text,
-  salary_min integer,
-  salary_max integer,
-  job_types text[],
-  experience_level text,
-  industries text,
-  exclude_companies text,
+  min_salary text,
+  company_types text,
+  skills text,
   updated_at timestamptz default now()
 );
 
