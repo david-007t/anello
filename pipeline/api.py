@@ -8,6 +8,7 @@ Endpoints:
 import os
 import logging
 import tempfile
+import base64
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -128,30 +129,12 @@ def tailor_endpoint(req: TailorRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
 
-    # 5. Upload PDF to Supabase storage
-    storage_path = f"{req.user_id}/tailored-{req.job_id}.pdf"
-    try:
-        # Remove existing file first to avoid 400 on duplicate upload
-        try:
-            db.storage.from_("tailored-resumes").remove([storage_path])
-        except Exception:
-            pass
-        db.storage.from_("tailored-resumes").upload(
-            storage_path,
-            pdf_bytes,
-            {"content-type": "application/pdf"},
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Storage upload failed: {e}")
-
-    # 6. Create a signed URL (valid 1 hour)
-    try:
-        signed = db.storage.from_("tailored-resumes").create_signed_url(storage_path, 3600)
-        url = signed.get("signedURL") or signed.get("signedUrl") or ""
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Could not create download URL: {e}")
-
-    return {"url": url, "job_id": req.job_id}
+    # 5. Return PDF directly as base64 — skip storage entirely
+    return {
+        "pdf_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
+        "filename": f"tailored-resume-{req.job_id[:8]}.pdf",
+        "job_id": req.job_id,
+    }
 
 
 @app.post("/run")

@@ -13,8 +13,14 @@ export default function TailorButton({ jobId }: { jobId: string }) {
         body: JSON.stringify({ job_id: jobId }),
       });
       if (!res.ok) throw new Error(await res.text());
-      const { url } = await res.json();
-      window.open(url, "_blank");
+      const { pdf_base64, filename } = await res.json();
+      const blob = new Blob([Uint8Array.from(atob(pdf_base64), c => c.charCodeAt(0))], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
       setState("done");
     } catch {
       setState("error");
