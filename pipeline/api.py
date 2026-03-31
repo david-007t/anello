@@ -99,7 +99,11 @@ def tailor_endpoint(req: TailorRequest):
     resume_path = resume_res.data[0]["file_path"]
     try:
         file_bytes = db.storage.from_("resumes").download(resume_path)
-        resume_text = file_bytes.decode("utf-8", errors="ignore")
+        # Extract text from PDF bytes
+        import io
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(file_bytes))
+        resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
 

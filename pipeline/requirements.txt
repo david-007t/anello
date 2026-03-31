@@ -7,4 +7,5 @@ python-dotenv
 fastapi
 uvicorn[standard]
 playwright
+pypdf
 apscheduler
