@@ -8,21 +8,21 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Anello — Your jobs come to you.",
+  title: "Anelo — Your jobs come to you.",
   description:
-    "Anello is an AI job agent that finds, tailors your resume, and applies to jobs automatically. Set your preferences and let Anello handle the grind.",
-  metadataBase: new URL("https://anello.io"),
+    "Anelo is an AI job agent that finds, tailors your resume, and applies to jobs automatically. Set your preferences and let Anelo handle the grind.",
+  metadataBase: new URL("https://anelo.io"),
   openGraph: {
-    title: "Anello — Your jobs come to you.",
+    title: "Anelo — Your jobs come to you.",
     description:
       "AI-powered job agent that finds, tailors, and applies to jobs for you.",
-    url: "https://anello.io",
-    siteName: "Anello",
+    url: "https://anelo.io",
+    siteName: "Anelo",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Anello — Your jobs come to you.",
+    title: "Anelo — Your jobs come to you.",
     description: "AI-powered job agent that applies to jobs on your behalf.",
   },
 };

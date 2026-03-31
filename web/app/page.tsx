@@ -9,7 +9,7 @@ const features = [
     ),
     title: "Daily Job Digest",
     description:
-      "Every morning, Anello sends you a curated list of jobs matched to your skills, preferences, and salary target.",
+      "Every morning, Anelo sends you a curated list of jobs matched to your skills, preferences, and salary target.",
   },
   {
     icon: (
@@ -29,7 +29,7 @@ const features = [
     ),
     title: "Auto-Apply",
     description:
-      "Anello submits your applications across Greenhouse, Lever, Workday, and more — including custom screening questions.",
+      "Anelo submits your applications across Greenhouse, Lever, Workday, and more — including custom screening questions.",
   },
   {
     icon: (
@@ -48,17 +48,17 @@ const steps = [
     step: "01",
     title: "Upload your resume",
     description:
-      "Drop in your master resume. Anello learns your skills, experience, and voice.",
+      "Drop in your master resume. Anelo learns your skills, experience, and voice.",
   },
   {
     step: "02",
     title: "Set your preferences",
     description:
-      "Tell Anello what you're looking for: role, location, salary, and company types.",
+      "Tell Anelo what you're looking for: role, location, salary, and company types.",
   },
   {
     step: "03",
-    title: "Anello does the rest",
+    title: "Anelo does the rest",
     description:
       "Every morning, fresh jobs. Every application, a tailored resume. All on autopilot.",
   },
@@ -69,7 +69,7 @@ const plans = [
     name: "Free Trial",
     price: "$0",
     period: "14 days",
-    description: "See what Anello can do — no card required.",
+    description: "See what Anelo can do — no card required.",
     features: [
       "10 job applications",
       "Daily job digest",
@@ -119,7 +119,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-black tracking-tight text-slate-900">
-            anello
+            anelo
           </span>
           <a
             href="#waitlist"
@@ -143,7 +143,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Anello is an AI job agent that finds relevant openings, tailors your
+          Anelo is an AI job agent that finds relevant openings, tailors your
           resume for each one, and submits applications — automatically, every
           day.
         </p>
@@ -191,7 +191,7 @@ export default function HomePage() {
               Everything you need to land a job
             </h2>
             <p className="text-slate-500 text-base max-w-xl mx-auto">
-              Anello handles the entire funnel so you can focus on interviews.
+              Anelo handles the entire funnel so you can focus on interviews.
             </p>
           </div>
 
@@ -321,7 +321,7 @@ export default function HomePage() {
             Stop applying. Start getting offers.
           </h2>
           <p className="text-slate-500 mb-10 text-base leading-relaxed">
-            Join the waitlist and be first to access Anello when we launch.
+            Join the waitlist and be first to access Anelo when we launch.
           </p>
           <div className="flex justify-center">
             <WaitlistForm />
@@ -332,12 +332,12 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm font-black text-slate-900">anello</span>
+          <span className="text-sm font-black text-slate-900">anelo</span>
           <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} Anello. All rights reserved.
+            © {new Date().getFullYear()} Anelo. All rights reserved.
           </p>
           <a
-            href="mailto:hello@anello.io"
+            href="mailto:hello@anelo.io"
             className="text-xs text-slate-400 hover:text-slate-600 transition"
           >
             Contact

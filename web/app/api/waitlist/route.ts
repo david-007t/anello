@@ -52,10 +52,10 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Anello Waitlist <waitlist@anello.io>",
+            from: "Anelo Waitlist <waitlist@anelo.io>",
             to: [ownerEmail],
             subject: `New waitlist signup: ${normalizedEmail}`,
-            text: `${normalizedEmail} just joined the Anello waitlist.`,
+            text: `${normalizedEmail} just joined the Anelo waitlist.`,
           }),
         });
       }
