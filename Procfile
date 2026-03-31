@@ -1,1 +1,1 @@
-worker: python scheduler.py
+web: cd pipeline && uvicorn api:app --host 0.0.0.0 --port $PORT

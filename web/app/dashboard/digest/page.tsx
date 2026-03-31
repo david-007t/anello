@@ -1,5 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import TailorButton from "./TailorButton";
 
 interface DigestJob {
   id: string;
@@ -75,6 +76,7 @@ export default async function DigestPage() {
                 {job.salary_range && (
                   <p className="text-xs text-slate-500 mt-0.5">{job.salary_range}</p>
                 )}
+                <TailorButton jobId={job.id} />
               </div>
               <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5">
                 {formatDate(job.matched_at)}
