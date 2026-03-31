@@ -1,7 +1,37 @@
 import { currentUser } from "@clerk/nextjs/server";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export default async function DashboardPage() {
   const user = await currentUser();
+
+  let applicationsSentThisMonth: string = "—";
+  let jobsInDigestToday: string = "—";
+
+  if (user?.id) {
+    try {
+      const now = new Date();
+      const firstOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+      const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+
+      const [{ count: appCount }, { count: digestCount }] = await Promise.all([
+        supabaseAdmin()
+          .from("applications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("applied_at", firstOfMonth),
+        supabaseAdmin()
+          .from("digest_jobs")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("matched_at", startOfToday),
+      ]);
+
+      if (appCount !== null) applicationsSentThisMonth = String(appCount);
+      if (digestCount !== null) jobsInDigestToday = String(digestCount);
+    } catch {
+      // fallback to "—" on error
+    }
+  }
 
   return (
     <div className="p-8">
@@ -16,8 +46,8 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
-          { label: "Applications sent", value: "—", sub: "this month" },
-          { label: "Jobs in digest", value: "—", sub: "today" },
+          { label: "Applications sent", value: applicationsSentThisMonth, sub: "this month" },
+          { label: "Jobs in digest", value: jobsInDigestToday, sub: "today" },
           { label: "Responses", value: "—", sub: "total" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-slate-100 rounded-2xl p-5">
