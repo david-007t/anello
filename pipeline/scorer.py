@@ -13,19 +13,19 @@ def score_job(job: dict, prefs: dict) -> int:
     text = f"{job.get('title','')} {job.get('description','')}".lower()
 
     # Skills match
-    skills_raw = prefs.get("skills", "")
+    skills_raw = prefs.get("skills") or ""
     if skills_raw:
         skills = [s.strip().lower() for s in re.split(r"[,;]", skills_raw) if s.strip()]
         matched = sum(1 for s in skills if s in text)
         score += int((matched / max(len(skills), 1)) * 50)
 
     # Role match
-    role = prefs.get("role", "").lower()
+    role = (prefs.get("role") or "").lower()
     if role and role in text:
         score += 30
 
     # Company type match
-    company_types = prefs.get("company_types", "").lower()
+    company_types = (prefs.get("company_types") or "").lower()
     if company_types:
         types = [t.strip() for t in re.split(r"[,;]", company_types) if t.strip()]
         company_text = job.get("company", "").lower()
