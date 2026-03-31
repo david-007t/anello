@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider afterSignOutUrl="/">
       <html lang="en" className={`${geist.variable} scroll-smooth`}>
         <body className="min-h-full antialiased">{children}</body>
       </html>

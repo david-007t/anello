@@ -81,7 +81,7 @@ export default async function DashboardLayout({
         </nav>
         <div className="p-4 border-t border-slate-100">
           <div className="flex items-center gap-3">
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-900 truncate">
                 {user.firstName || user.emailAddresses[0]?.emailAddress}
