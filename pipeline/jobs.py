@@ -98,8 +98,11 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
         )
         resp.raise_for_status()
         data = resp.json()
+        if data.get("status") != "OK" or not data.get("data"):
+            logger.error(f"[jsearch] API error for role='{role}': {data.get('message') or data}")
+            return []
         jobs = []
-        for r in data.get("data", [])[:max_results]:
+        for r in data["data"][:max_results]:
             city = r.get("job_city") or ""
             state = r.get("job_state") or ""
             country = r.get("job_country") or ""
