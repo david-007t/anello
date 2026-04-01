@@ -24,6 +24,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from tailor import tailor_job, tailor_resume
 from resume_to_pdf import parse_resume_md, md_to_html_resume
+from validate import validate_job
+from drafter import draft_message
+from apply import detect_ats, apply_to_job
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -240,6 +243,152 @@ def tailor_endpoint(req: TailorRequest):
     }
 
 
+class DraftRequest(BaseModel):
+    job_id: str
+    user_id: str
+    message_type: str = "linkedin_connection"  # linkedin_connection | linkedin_inmail | cold_email
+
+
+@app.post("/draft")
+def draft_endpoint(req: DraftRequest):
+    db = get_db()
+
+    # 1. Fetch job from digest_jobs
+    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
+    if not job_res.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = job_res.data[0]
+
+    job_for_draft = {
+        "title": job.get("role", ""),
+        "company": job.get("company", ""),
+        "description": job.get("description", ""),
+    }
+
+    # 2. Fetch user's latest resume from Supabase storage
+    resume_res = (
+        db.table("resumes")
+        .select("file_path,file_name")
+        .eq("user_id", req.user_id)
+        .order("uploaded_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not resume_res.data:
+        raise HTTPException(status_code=404, detail="No resume found for user")
+
+    resume_path = resume_res.data[0]["file_path"]
+    try:
+        import io
+        from pypdf import PdfReader
+        file_bytes = db.storage.from_("resumes").download(resume_path)
+        reader = PdfReader(io.BytesIO(file_bytes))
+        resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
+
+    # 3. Draft message via Anthropic
+    try:
+        result = draft_message(resume_text, job_for_draft, req.message_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Message drafting failed: {e}")
+
+    return {**result, "job_id": req.job_id}
+
+
+class ApplyRequest(BaseModel):
+    job_id: str
+    user_id: str
+
+
+@app.post("/apply")
+def apply_endpoint(req: ApplyRequest):
+    """Attempt Easy Apply via Playwright for Greenhouse or Lever jobs."""
+    db = get_db()
+
+    # 1. Fetch job
+    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
+    if not job_res.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = job_res.data[0]
+    job["url"] = job.get("job_url", "")
+
+    # 2. Fetch user info
+    user_res = (
+        db.table("users")
+        .select("email,first_name,last_name")
+        .eq("id", req.user_id)
+        .limit(1)
+        .execute()
+    )
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = user_res.data[0]
+    applicant = {
+        "first_name": user.get("first_name", ""),
+        "last_name": user.get("last_name", ""),
+        "email": user.get("email", ""),
+        "phone": "",
+        "linkedin_url": "",
+    }
+
+    # 3. Download resume PDF to temp file
+    resume_res = (
+        db.table("resumes")
+        .select("file_path")
+        .eq("user_id", req.user_id)
+        .order("uploaded_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not resume_res.data:
+        raise HTTPException(status_code=404, detail="No resume found for user")
+
+    resume_tmp_path = ""
+    cover_tmp_path = ""
+    try:
+        import io
+        resume_bytes = db.storage.from_("resumes").download(resume_res.data[0]["file_path"])
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(resume_bytes)
+            resume_tmp_path = tmp.name
+
+        # 4. Find latest cover letter in tailored-resumes bucket
+        try:
+            bucket_files = db.storage.from_("tailored-resumes").list(path=req.user_id)
+            cover_files = [
+                f for f in (bucket_files or [])
+                if (f.get("name") or "").endswith("-cover-letter.pdf")
+            ]
+            if cover_files:
+                cover_files.sort(key=lambda f: f.get("updated_at") or f.get("created_at") or "", reverse=True)
+                cover_path = f"{req.user_id}/{cover_files[0]['name']}"
+                cover_bytes = db.storage.from_("tailored-resumes").download(cover_path)
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                    tmp.write(cover_bytes)
+                    cover_tmp_path = tmp.name
+        except Exception as e:
+            logger.warning(f"Could not fetch cover letter: {e}")
+
+        # 5. Run automation
+        result = apply_to_job(job, applicant, resume_tmp_path, cover_tmp_path)
+
+        # 6. Mark applied if successful
+        if result.get("success"):
+            db.table("digest_jobs").update({"applied": True}).eq("id", req.job_id).execute()
+
+        return {**result, "job_id": req.job_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        for path in [resume_tmp_path, cover_tmp_path]:
+            if path:
+                Path(path).unlink(missing_ok=True)
+
+
 @app.post("/run")
 def run_pipeline():
     """Trigger full pipeline run. Called by Railway cron."""
@@ -249,3 +398,32 @@ def run_pipeline():
         return {"status": "complete"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ValidateRequest(BaseModel):
+    job_id: str
+    user_id: str
+
+
+@app.post("/validate")
+def validate_endpoint(req: ValidateRequest):
+    """Run pre-apply quality gate for a specific job."""
+    db = get_db()
+
+    # Fetch job from digest_jobs
+    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
+    if not job_res.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = job_res.data[0]
+
+    # Fetch user preferences
+    prefs_res = (
+        db.table("preferences")
+        .select("*")
+        .eq("user_id", req.user_id)
+        .limit(1)
+        .execute()
+    )
+    prefs = prefs_res.data[0] if prefs_res.data else {}
+
+    return validate_job(job, prefs)
