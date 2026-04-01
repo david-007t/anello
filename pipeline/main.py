@@ -43,7 +43,19 @@ MAX_JOBS_PER_USER = 20
 TOP_TAILOR_COUNT = 5  # tailor resume for top N matches only
 
 
-def run():
+def run(on_step=None):
+    """
+    Run the full pipeline. Optional on_step(msg: str) callback receives
+    human-readable status updates at each key stage.
+    """
+    def _step(msg: str):
+        logger.info(msg)
+        if on_step:
+            try:
+                on_step(msg)
+            except Exception:
+                pass
+
     if not SUPABASE_URL or not SUPABASE_KEY:
         logger.error("Missing Supabase credentials")
         return
@@ -53,7 +65,7 @@ def run():
     # Get all users who have set preferences
     prefs_res = db.table("preferences").select("*").execute()
     all_prefs = prefs_res.data or []
-    logger.info(f"Running pipeline for {len(all_prefs)} users")
+    _step(f"Starting — {len(all_prefs)} user(s) found")
 
     for prefs in all_prefs:
         user_id = prefs.get("user_id")
@@ -65,13 +77,15 @@ def run():
             logger.info(f"Skipping {user_id} — no role set")
             continue
 
-        logger.info(f"Processing user {user_id} | role={prefs.get('role')} location={prefs.get('location')}")
+        _step(f"Fetching jobs for {prefs.get('role')} · {prefs.get('location', 'any location')}")
 
         # 1. Fetch jobs
         raw_jobs = fetch_jobs(prefs, max_results=MAX_JOBS_PER_USER)
         if not raw_jobs:
             logger.warning(f"No jobs found for user {user_id}")
             continue
+
+        _step(f"Scoring {len(raw_jobs)} jobs")
 
         # 2. Score + filter
         ranked = filter_and_rank(raw_jobs, prefs)
@@ -99,10 +113,14 @@ def run():
             except Exception as e:
                 logger.warning(f"Could not load resume for {user_id}: {e}")
 
+        _step(f"Tailoring resume for top {min(TOP_TAILOR_COUNT, len(ranked))} matches")
+
         # 4. Tailor resume for top matches
         for i, job in enumerate(ranked[:TOP_TAILOR_COUNT]):
             if resume_text:
                 ranked[i]["tailored_resume"] = tailor_resume(resume_text, job)
+
+        _step(f"Saving {len(ranked)} jobs to digest")
 
         # 5. Save to digest_jobs
         rows = []
@@ -121,6 +139,8 @@ def run():
         if rows:
             db.table("digest_jobs").insert(rows).execute()
             logger.info(f"Saved {len(rows)} jobs for user {user_id}")
+
+        _step("Sending digest email")
 
         # 6. Send digest email — look up email from users table
         user_res = (

@@ -11,6 +11,8 @@ import tempfile
 import base64
 import html as html_lib
 import httpx
+import threading
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -32,6 +34,15 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI()
+
+# Pipeline state — updated by background thread, read by /status
+_pipeline_state: dict = {
+    "status": "idle",   # idle | running | complete | error
+    "step": "",
+    "started_at": None,
+    "finished_at": None,
+    "error": None,
+}
 
 # Daily pipeline run at 14:00 UTC (replaces railway.toml cronSchedule)
 _scheduler = BackgroundScheduler()
@@ -389,15 +400,44 @@ def apply_endpoint(req: ApplyRequest):
                 Path(path).unlink(missing_ok=True)
 
 
+@app.get("/status")
+def pipeline_status():
+    """Return current pipeline run state."""
+    return _pipeline_state
+
+
 @app.post("/run")
 def run_pipeline():
-    """Trigger full pipeline run. Called by Railway cron."""
-    try:
-        from main import run
-        run()
-        return {"status": "complete"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """Trigger full pipeline run in background. Returns immediately."""
+    if _pipeline_state["status"] == "running":
+        return {"status": "already_running"}
+
+    def _run():
+        _pipeline_state.update({
+            "status": "running",
+            "step": "Starting…",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": None,
+            "error": None,
+        })
+        try:
+            from main import run
+            run(on_step=lambda msg: _pipeline_state.update({"step": msg}))
+            _pipeline_state.update({
+                "status": "complete",
+                "step": "Done",
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            _pipeline_state.update({
+                "status": "error",
+                "step": str(e),
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "error": str(e),
+            })
+
+    threading.Thread(target=_run, daemon=True).start()
+    return {"status": "started"}
 
 
 class ValidateRequest(BaseModel):
