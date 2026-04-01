@@ -58,8 +58,13 @@ export default async function DigestPage() {
       ) : (
         <div className="flex flex-col gap-3 max-w-2xl">
           {jobs.map((job, index) => (
-            <div key={job.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start justify-between gap-4">
-              <div className="min-w-0">
+            <div key={job.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start gap-4">
+              {/* Job number */}
+              <span className="text-2xl font-black text-slate-100 select-none w-8 shrink-0 leading-none mt-0.5">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <a
                     href={job.job_url}
@@ -74,6 +79,11 @@ export default async function DigestPage() {
                       Applied
                     </span>
                   )}
+                  {job.source && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-400 capitalize">
+                      {job.source}
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-slate-700 font-medium">{job.company}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{job.location}</p>
@@ -82,7 +92,8 @@ export default async function DigestPage() {
                 )}
                 <TailorButton jobId={job.id} jobNumber={index + 1} />
               </div>
-              <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5">
+
+              <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
                 {formatDate(job.matched_at)}
               </span>
             </div>

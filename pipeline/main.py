@@ -93,6 +93,20 @@ def run(on_step=None):
             logger.info(f"No qualifying jobs for user {user_id}")
             continue
 
+        # Deduplicate by (company, title) — Adzuna returns same posting for many locations
+        seen_jobs: set[tuple] = set()
+        deduped = []
+        for job in ranked:
+            key = (
+                (job.get("company") or "").lower().strip(),
+                (job.get("title") or "").lower().strip(),
+            )
+            if key not in seen_jobs:
+                seen_jobs.add(key)
+                deduped.append(job)
+        ranked = deduped
+        logger.info(f"After dedup: {len(ranked)} unique jobs")
+
         # 3. Get user's resume text
         resume_res = (
             db.table("resumes")
