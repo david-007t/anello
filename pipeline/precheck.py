@@ -301,6 +301,7 @@ _REQUIRED_VARS = [
     ("ADZUNA_API_KEY",),
     ("ANTHROPIC_API_KEY",),
     ("RESEND_API_KEY",),
+    ("RAPIDAPI_KEY",),
 ]
 
 
