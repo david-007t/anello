@@ -28,15 +28,15 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
 
       if (data.success) {
         setState("done");
-        setDetail(data.confirmation ?? "Application submitted");
+        setDetail("Application submitted");
         router.refresh();
       } else if (data.ats === "workday" || data.ats === "unknown") {
         setState("unsupported");
-        setDetail(data.error ?? "Manual application required");
+        setDetail("Open job link to apply manually");
         setTimeout(() => { setState("idle"); setDetail(""); }, 6000);
       } else {
         setState("error");
-        setDetail(data.error ?? "No confirmation received");
+        setDetail("Apply failed — try again or apply manually");
         setTimeout(() => { setState("idle"); setDetail(""); }, 5000);
       }
     } catch {

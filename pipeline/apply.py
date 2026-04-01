@@ -356,18 +356,45 @@ def apply_to_job(
         context = browser.new_context()
         page = context.new_page()
         try:
-            # If ATS unknown (e.g. Adzuna redirect URL), navigate and re-detect from resolved URL
+            # If ATS unknown (e.g. Adzuna job page), navigate and find employer apply link
             if ats == "unknown":
                 try:
-                    page.goto(url, timeout=30000)
-                    page.wait_for_timeout(1500)
-                    resolved_url = page.url
+                    page.goto(url, timeout=30000, wait_until="domcontentloaded")
+                    page.wait_for_timeout(2000)
+
+                    # Try to find "Apply on company site" / "Apply now" link pointing to employer ATS
+                    employer_url = None
+                    apply_link_selectors = [
+                        "a[data-qa='apply-button']",
+                        "a[href*='greenhouse.io']",
+                        "a[href*='lever.co']",
+                        "a[href*='myworkdayjobs.com']",
+                        "a:has-text('Apply on company site')",
+                        "a:has-text('Apply on employer site')",
+                        "a:has-text('Apply now')",
+                        "a:has-text('Apply for this job')",
+                    ]
+                    for sel in apply_link_selectors:
+                        try:
+                            el = page.locator(sel).first
+                            if el.is_visible(timeout=1500):
+                                href = el.get_attribute("href") or ""
+                                if href and "adzuna" not in href:
+                                    employer_url = href
+                                    break
+                        except Exception:
+                            continue
+
+                    if employer_url:
+                        resolved_url = employer_url
+                    else:
+                        resolved_url = page.url
+
                     ats = detect_ats(resolved_url)
-                    # Update job URL to resolved URL so ATS handlers use it directly
                     job = {**job, "url": resolved_url}
-                    logger.info(f"Resolved redirect: {url} → {resolved_url} (ats={ats})")
+                    logger.info(f"Resolved: {url[:60]}… → {resolved_url[:60]}… (ats={ats})")
                 except Exception as e:
-                    logger.error(f"Failed to resolve redirect for {url}: {e}")
+                    logger.error(f"Failed to resolve ATS for job: {e}")
 
             if ats == "workday":
                 logger.warning(f"Workday application skipped (too complex): {url}")
