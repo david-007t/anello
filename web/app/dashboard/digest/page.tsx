@@ -1,6 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import TailorButton from "./TailorButton";
+import RunDigestButton from "./RunDigestButton";
 
 interface DigestJob {
   id: string;
@@ -36,11 +37,14 @@ export default async function DigestPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Job Digest</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Your daily curated job matches. Set preferences to start receiving jobs.
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Job Digest</h1>
+          <p className="text-slate-500 mt-1 text-sm">
+            Your daily curated job matches. Set preferences to start receiving jobs.
+          </p>
+        </div>
+        <RunDigestButton />
       </div>
 
       {jobs.length === 0 ? (
