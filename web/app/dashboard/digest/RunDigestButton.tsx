@@ -43,17 +43,19 @@ export default function RunDigestButton() {
             setStatus("idle");
             setStep("");
           }, 2000);
-        } else if (data.status === "error") {
+        } else if (data.status === "error" || data.status === "idle") {
           stopPolling();
-          setTimeout(() => {
-            setStatus("idle");
-            setStep("");
-          }, 4000);
+          if (data.status === "error") {
+            setTimeout(() => {
+              setStatus("idle");
+              setStep("");
+            }, 4000);
+          }
         }
       } catch {
         // ignore transient fetch errors
       }
-    }, 1500);
+    }, 3000);
   }
 
   useEffect(() => () => stopPolling(), []);
