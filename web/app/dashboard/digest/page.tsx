@@ -1,7 +1,9 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import TailorButton from "./TailorButton";
+import ApplyButton from "./ApplyButton";
 import RunDigestButton from "./RunDigestButton";
+import ClearDigestButton from "./ClearDigestButton";
 
 interface DigestJob {
   id: string;
@@ -16,8 +18,46 @@ interface DigestJob {
   applied: boolean;
 }
 
+interface GroupedJob {
+  id: string; // primary job_id (for tailor/apply)
+  company: string;
+  role: string;
+  job_url: string;
+  source: string;
+  matched_at: string;
+  applied: boolean;
+  locations: string[];
+  salaries: string[];
+}
+
 function formatDate(ts: string): string {
   return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function groupJobs(jobs: DigestJob[]): GroupedJob[] {
+  const map = new Map<string, GroupedJob>();
+  for (const job of jobs) {
+    const key = `${(job.company ?? "").toLowerCase().trim()}|||${(job.role ?? "").toLowerCase().trim()}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        id: job.id,
+        company: job.company,
+        role: job.role,
+        job_url: job.job_url,
+        source: job.source,
+        matched_at: job.matched_at,
+        applied: job.applied,
+        locations: job.location ? [job.location] : [],
+        salaries: job.salary_range ? [job.salary_range] : [],
+      });
+    } else {
+      const g = map.get(key)!;
+      if (job.applied) g.applied = true;
+      if (job.location && !g.locations.includes(job.location)) g.locations.push(job.location);
+      if (job.salary_range && !g.salaries.includes(job.salary_range)) g.salaries.push(job.salary_range);
+    }
+  }
+  return Array.from(map.values());
 }
 
 export default async function DigestPage() {
@@ -30,10 +70,12 @@ export default async function DigestPage() {
       .select("*")
       .eq("user_id", user.id)
       .order("matched_at", { ascending: false })
-      .limit(50);
+      .limit(100);
     if (error) console.error("[digest] supabase error:", error);
     jobs = data ?? [];
   }
+
+  const grouped = groupJobs(jobs);
 
   return (
     <div className="p-8">
@@ -44,10 +86,13 @@ export default async function DigestPage() {
             Your daily curated job matches. Set preferences to start receiving jobs.
           </p>
         </div>
-        <RunDigestButton />
+        <div className="flex items-center gap-2">
+          <ClearDigestButton />
+          <RunDigestButton />
+        </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {grouped.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-2xl p-12 text-center max-w-xl">
           <svg className="w-10 h-10 text-slate-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -57,10 +102,10 @@ export default async function DigestPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 max-w-2xl">
-          {jobs.map((job, index) => (
+          {grouped.map((job, index) => (
             <div key={job.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start gap-4">
               {/* Job number */}
-              <span className="text-2xl font-black text-slate-100 select-none w-8 shrink-0 leading-none mt-0.5">
+              <span className="text-2xl font-black text-slate-300 select-none w-8 shrink-0 leading-none mt-0.5">
                 {String(index + 1).padStart(2, "0")}
               </span>
 
@@ -70,7 +115,7 @@ export default async function DigestPage() {
                     href={job.job_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-semibold text-indigo-600 hover:underline truncate"
+                    className="text-sm font-semibold text-indigo-600 hover:underline"
                   >
                     {job.role}
                   </a>
@@ -85,12 +130,39 @@ export default async function DigestPage() {
                     </span>
                   )}
                 </div>
+
                 <p className="text-sm text-slate-700 font-medium">{job.company}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{job.location}</p>
-                {job.salary_range && (
-                  <p className="text-xs text-slate-500 mt-0.5">{job.salary_range}</p>
+
+                {/* Locations */}
+                {job.locations.length > 0 && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {job.locations.slice(0, 3).join(" · ")}
+                    {job.locations.length > 3 && ` +${job.locations.length - 3} more`}
+                  </p>
                 )}
-                <TailorButton jobId={job.id} jobNumber={index + 1} />
+
+                {/* Salaries — show range if multiple */}
+                {job.salaries.length > 0 && (
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {job.salaries.length === 1
+                      ? job.salaries[0]
+                      : (() => {
+                          const nums = job.salaries
+                            .flatMap((s) => s.replace(/[$,]/g, "").split("–").map(Number))
+                            .filter(Boolean);
+                          const lo = Math.min(...nums);
+                          const hi = Math.max(...nums);
+                          return lo === hi
+                            ? `$${lo.toLocaleString()}`
+                            : `$${lo.toLocaleString()}–$${hi.toLocaleString()}`;
+                        })()}
+                  </p>
+                )}
+
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <TailorButton jobId={job.id} jobNumber={index + 1} />
+                  <ApplyButton jobId={job.id} />
+                </div>
               </div>
 
               <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
