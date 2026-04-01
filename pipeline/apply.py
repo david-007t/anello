@@ -29,6 +29,8 @@ def detect_ats(url: str) -> str:
         return "workable"
     if ".myworkdayjobs.com" in url_lower or "workday.com" in url_lower:
         return "workday"
+    if "teamtailor.com" in url_lower:
+        return "teamtailor"
     return "unknown"
 
 
@@ -417,6 +419,15 @@ def apply_to_job(
                     "ats": ats,
                     "confirmation": "",
                     "error": f"{ats.title()} auto-apply coming soon",
+                    "screenshot_b64": "",
+                }
+
+            if ats == "teamtailor":
+                return {
+                    "success": False,
+                    "ats": "teamtailor",
+                    "confirmation": "",
+                    "error": "Teamtailor auto-apply not yet implemented — apply manually",
                     "screenshot_b64": "",
                 }
 

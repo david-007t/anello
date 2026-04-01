@@ -77,9 +77,10 @@ def run(on_step=None):
             logger.info(f"Skipping {user_id} — no role set")
             continue
 
-        _step(f"Fetching jobs for {prefs.get('role')} · {prefs.get('location', 'any location')}")
+        roles = [r for r in [prefs.get("role"), prefs.get("role_2"), prefs.get("role_3")] if r]
+        _step(f"Fetching jobs for {', '.join(roles)} · {prefs.get('location', 'any location')}")
 
-        # 1. Fetch jobs
+        # 1. Fetch jobs (fetch_jobs handles all roles from prefs internally)
         raw_jobs = fetch_jobs(prefs, max_results=MAX_JOBS_PER_USER)
         if not raw_jobs:
             logger.warning(f"No jobs found for user {user_id}")
@@ -100,6 +101,7 @@ def run(on_step=None):
             key = (
                 (job.get("company") or "").lower().strip(),
                 (job.get("title") or "").lower().strip(),
+                (job.get("url") or "").lower().strip(),
             )
             if key not in seen_jobs:
                 seen_jobs.add(key)
@@ -146,7 +148,7 @@ def run(on_step=None):
                 "user_id": user_id,
                 "company": job.get("company", ""),
                 "role": job.get("title", ""),
-                "job_url": job.get("url", ""),
+                "job_url": job.get("url") or job.get("display_url", ""),
                 "location": job.get("location", ""),
                 "salary_range": _fmt_salary(job),
                 "source": job.get("source", "adzuna"),

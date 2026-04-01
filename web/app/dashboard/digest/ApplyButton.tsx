@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 export default function ApplyButton({ jobId }: { jobId: string }) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error" | "unsupported">("idle");
   const [detail, setDetail] = useState("");
+  const [validateReasons, setValidateReasons] = useState<string[]>([]);
   const router = useRouter();
 
   async function handleApply() {
     setState("loading");
     setDetail("");
+    setValidateReasons([]);
     try {
       const res = await fetch("/api/apply", {
         method: "POST",
@@ -20,10 +22,21 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setState("error");
-        setDetail(data.error ?? "Apply failed");
-        setTimeout(() => { setState("idle"); setDetail(""); }, 5000);
+        if (res.status === 422) {
+          const reasons: string[] = data.detail?.reasons ?? [];
+          setState("error");
+          setValidateReasons(reasons);
+          setDetail(reasons[0] ?? "Validation failed");
+        } else {
+          setState("error");
+          setDetail(data.error ?? "Apply failed");
+        }
+        setTimeout(() => { setState("idle"); setDetail(""); setValidateReasons([]); }, 5000);
         return;
+      }
+
+      if (data.validate_warnings?.length > 0) {
+        console.warn("[ApplyButton] validate_warnings:", data.validate_warnings);
       }
 
       if (data.success) {
@@ -33,16 +46,16 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
       } else if (data.ats === "workday" || data.ats === "unknown") {
         setState("unsupported");
         setDetail("Open job link to apply manually");
-        setTimeout(() => { setState("idle"); setDetail(""); }, 6000);
+        setTimeout(() => { setState("idle"); setDetail(""); setValidateReasons([]); }, 6000);
       } else {
         setState("error");
         setDetail("Apply failed — try again or apply manually");
-        setTimeout(() => { setState("idle"); setDetail(""); }, 5000);
+        setTimeout(() => { setState("idle"); setDetail(""); setValidateReasons([]); }, 5000);
       }
     } catch {
       setState("error");
       setDetail("Network error");
-      setTimeout(() => { setState("idle"); setDetail(""); }, 5000);
+      setTimeout(() => { setState("idle"); setDetail(""); setValidateReasons([]); }, 5000);
     }
   }
 
@@ -81,6 +94,13 @@ export default function ApplyButton({ jobId }: { jobId: string }) {
         }`}>
           {detail}
         </p>
+      )}
+      {validateReasons.length > 0 && (
+        <ul className="text-xs max-w-[160px] leading-snug text-amber-600 list-disc pl-3">
+          {validateReasons.map((reason, i) => (
+            <li key={i}>{reason}</li>
+          ))}
+        </ul>
       )}
     </div>
   );

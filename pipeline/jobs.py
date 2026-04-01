@@ -80,7 +80,7 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
 
     params = {
         "query": query,
-        "num_pages": "1",
+        "num_pages": "2",
         "date_posted": "week",
     }
     if is_remote:
@@ -112,13 +112,16 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
             salary_min = r.get("job_min_salary")
             salary_max = r.get("job_max_salary")
 
-            apply_url = r.get("job_apply_link") or r.get("job_google_link") or ""
+            apply_url = r.get("job_apply_link") or ""
+            google_url = r.get("job_google_link") or ""
+            display_url = apply_url or google_url  # for human browsing
 
             jobs.append({
                 "title": r.get("job_title", ""),
                 "company": r.get("employer_name", ""),
                 "location": location_str,
                 "url": apply_url,
+                "display_url": display_url,
                 "description": r.get("job_description", "")[:3000],
                 "salary_min": salary_min,
                 "salary_max": salary_max,

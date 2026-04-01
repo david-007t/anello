@@ -324,6 +324,29 @@ def apply_endpoint(req: ApplyRequest):
     job = job_res.data[0]
     job["url"] = job.get("job_url", "")
 
+    # 1b. Fetch user preferences and run validation gate
+    prefs_res = (
+        db.table("preferences")
+        .select("*")
+        .eq("user_id", req.user_id)
+        .limit(1)
+        .execute()
+    )
+    prefs = prefs_res.data[0] if prefs_res.data else {}
+    validation = validate_job(job, prefs)
+    validate_warnings: list = []
+    if validation.get("gate") == "fail":
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "gate": "fail",
+                "reasons": validation.get("reasons", []),
+                "score": validation.get("score", 0),
+            },
+        )
+    if validation.get("gate") == "warn":
+        validate_warnings = validation.get("warnings", [])
+
     # 2. Fetch user info
     user_res = (
         db.table("users")
@@ -388,7 +411,7 @@ def apply_endpoint(req: ApplyRequest):
         if result.get("success"):
             db.table("digest_jobs").update({"applied": True}).eq("id", req.job_id).execute()
 
-        return {**result, "job_id": req.job_id}
+        return {**result, "job_id": req.job_id, "validate_warnings": validate_warnings}
 
     except HTTPException:
         raise
