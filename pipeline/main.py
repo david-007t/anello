@@ -155,6 +155,14 @@ def run(on_step=None):
                 "applied": False,
             })
 
+        # Cross-run dedup: skip jobs already in digest_jobs for this user
+        try:
+            existing_res = db.table("digest_jobs").select("job_url").eq("user_id", user_id).execute()
+            existing_urls = {r["job_url"] for r in (existing_res.data or []) if r.get("job_url")}
+            rows = [r for r in rows if r.get("job_url") and r["job_url"] not in existing_urls]
+        except Exception as e:
+            logger.warning(f"Could not fetch existing jobs for dedup: {e}")
+
         if rows:
             db.table("digest_jobs").insert(rows).execute()
             logger.info(f"Saved {len(rows)} jobs for user {user_id}")
