@@ -1,5 +1,5 @@
 # Anelo — Session Handoff (2026-04-01)
-**Repo:** github.com/david-007t/anello — main branch, latest commit `dda46e0`
+**Repo:** github.com/david-007t/anello — main branch, latest commit `00c3c6d`
 **Domain:** anelo.io (Porkbun DNS → Vercel)
 **Next session prompt:** "Read HANDOFF.md and continue from there."
 
@@ -7,67 +7,59 @@
 
 ## What's working
 
-- **Job digest pipeline**: fetches jobs daily at 14:00 UTC across up to 3 roles in parallel, scores/filters (incl. experience range), deduplicates by company+role, saves to `digest_jobs`, sends email via Resend from `digest@anelo.io` (domain verified)
-- **Digest page** (`/dashboard/digest`): numbered jobs (01/02/03), source badge (adzuna), consolidated duplicate postings into one card with all locations + salary range, Tailor Resume + Cover Letter + Easy Apply buttons per job
-- **Clear Digest button**: deletes all digest_jobs for user, confirms before delete
-- **Run Digest button**: triggers pipeline on demand with live step status (polls /status every 3s)
-- **Resume tailoring**: fine-tuned PM/DE/TPM mode-detection prompt (claude-sonnet-4-6), generates both resume PDF + cover letter PDF in one call
-- **Storage**: both PDFs saved to `tailored-resumes` Supabase bucket; 3-resume limit enforced (bypassed for owner)
-- **Resume page** (`/dashboard/resume`): upload master resume, view/download/delete tailored resumes and cover letters
-- **Preferences page**: 3 role fields, experience min/max, location, salary, company types, skills
-- **validate.py**: pre-apply quality gate (5 FAIL gates, 2 WARN gates) + `/validate` endpoint
-- **drafter.py**: Claude-powered LinkedIn connection/InMail/cold email drafter + `/draft` endpoint
-- **apply.py**: Playwright Easy Apply for Greenhouse + Lever, Workday stubbed — `/apply` endpoint wired to UI
-- **RLS enabled** on all Supabase tables (users, preferences, resumes, digest_jobs, applications)
+- **Job digest pipeline**: fetches jobs daily at 14:00 UTC, deduplicates by company+role, saves to `digest_jobs`, sends email via Resend from `digest@anelo.io`
+- **Two job sources**: Adzuna + JSearch (RapidAPI) run in parallel across up to 3 roles. JSearch returns direct employer ATS URLs; Adzuna returns Adzuna redirect pages.
+- **Digest page** (`/dashboard/digest`): numbered jobs (01/02/03), source badge (adzuna/jsearch), consolidated duplicate postings, Tailor Resume + Cover Letter + Easy Apply buttons, Clear Digest + Run Digest buttons with live status
+- **Resume tailoring**: PM/DE/TPM mode-detection prompt, dual PDF (resume + cover letter), saved to Supabase storage
+- **Easy Apply**: Playwright automation for Greenhouse + Lever. Works on JSearch jobs (direct ATS URLs). Adzuna jobs return "Manual Only" (Adzuna blocks headless browsers before showing employer link).
+- **validate.py**: pre-apply quality gate + `/validate` endpoint
+- **drafter.py**: Claude-powered LinkedIn/InMail/cold email drafter + `/draft` endpoint (not yet tested end-to-end)
+- **RLS enabled** on all Supabase tables
 
 ## Infrastructure
 
 - **Railway**: `https://anelo-production.up.railway.app` — FastAPI uvicorn, port 8000
 - **Vercel**: `anelo.io`
 - **Supabase**: `nyfpzapdafivahkuktww.supabase.co`
+- **Railway env vars**: `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADZUNA_APP_ID`, `ADZUNA_API_KEY`, `RESEND_API_KEY`, `RAPIDAPI_KEY` ✓
 
-## Supabase schema notes
+## Open decision — Adzuna vs JSearch only
 
-- `preferences` columns: `role`, `role_2`, `role_3`, `experience_min`, `experience_max`, `location`, `min_salary`, `company_types`, `skills`
+JSearch returns direct ATS URLs (auto-apply works). Adzuna returns Adzuna redirect pages (auto-apply blocked). Question: drop Adzuna entirely once JSearch volume is confirmed sufficient, or keep both for manual-apply fallback?
+
+**Next step**: run one digest with both active, count how many JSearch jobs come back. If 15+, drop Adzuna. If fewer, keep both.
+
+## Supabase schema
+
+- `preferences`: `role`, `role_2`, `role_3`, `experience_min`, `experience_max`, `location`, `min_salary`, `company_types`, `skills`
 - `tailored-resumes` bucket: `{userId}/{filename}.pdf` — cover letters end in `-cover-letter.pdf`
-- RLS enabled on all tables — all access goes through service role key (bypasses RLS)
+- All tables have RLS enabled — all access via service role key (bypasses RLS)
 
-## Known issue — Easy Apply
+## Remaining work (priority order)
 
-`apply.py` currently returns "Manual Only" for all Adzuna-sourced jobs because:
-- Adzuna `redirect_url` lands on `adzuna.com/land/ad/{id}` (their own job page)
-- Playwright tries to find an employer apply link on that page but Adzuna blocks headless browsers with cookie walls before rendering the apply button
-
-**Fix**: Add JSearch as a second job source. JSearch returns direct employer ATS URLs (Greenhouse, Lever, etc.) — no Adzuna intermediate page. Auto-apply will work immediately for those jobs.
-
-## Next session priority
-
-1. **Add JSearch (RapidAPI)** as a second job source alongside Adzuna
-   - User needs to: sign up at rapidapi.com → subscribe to JSearch free plan → copy API key → add `RAPIDAPI_KEY` to Railway
-   - Code: add `jsearch.py` fetcher to `pipeline/jobs.py`, run in parallel with Adzuna, deduplicate by URL
-   - JSearch returns direct ATS URLs → auto-apply will work end-to-end
-2. **Test auto-apply** against a real Greenhouse/Lever job from JSearch results
-3. **drafter.py** — not yet tested end-to-end, needs a test run
+1. **Evaluate JSearch volume** — run digest, count jsearch-sourced jobs, decide whether to drop Adzuna
+2. **Test Easy Apply end-to-end** — find a JSearch job that lands on Greenhouse/Lever, hit Apply, verify `applied=true` gets set in DB
+3. **Test drafter.py** — hit `/draft` endpoint, verify LinkedIn connection message quality
+4. **validate.py integration** — currently built + endpoint exists but not called automatically before apply; consider calling it in the `/apply` flow
+5. **Add more roles/sources if needed** — The Muse (free API, startup-focused) is easy to add if JSearch volume is low for certain role types
 
 ## Key files
 
 | File | Purpose |
 |------|---------|
 | `pipeline/api.py` | FastAPI — `/tailor`, `/validate`, `/draft`, `/apply`, `/run`, `/status`, `/health` |
-| `pipeline/tailor.py` | Fine-tuned resume + cover letter generation |
-| `pipeline/jobs.py` | Adzuna fetch, 3-role parallel via ThreadPoolExecutor |
-| `pipeline/scorer.py` | Score + filter, experience range, 3-role match |
-| `pipeline/main.py` | Daily pipeline orchestration with on_step callback |
+| `pipeline/jobs.py` | Adzuna + JSearch fetch, 3-role parallel, dedup by URL |
+| `pipeline/apply.py` | Playwright Easy Apply (Greenhouse + Lever), ATS detection via redirect resolution |
+| `pipeline/tailor.py` | Resume + cover letter generation |
+| `pipeline/scorer.py` | Score + filter, experience range |
+| `pipeline/main.py` | Daily pipeline with on_step callback for live status |
 | `pipeline/validate.py` | Pre-apply quality gate |
 | `pipeline/drafter.py` | Outreach message drafter |
-| `pipeline/apply.py` | Playwright Easy Apply (Greenhouse + Lever) |
-| `web/app/api/tailor/route.ts` | Tailor proxy + storage limit check |
-| `web/app/api/apply/route.ts` | Apply proxy to Railway |
-| `web/app/api/clear-digest/route.ts` | Delete digest_jobs for user |
-| `web/app/api/run-digest/route.ts` | Trigger pipeline run |
-| `web/app/api/pipeline-status/route.ts` | Poll pipeline run state |
-| `web/app/dashboard/digest/page.tsx` | Digest page — grouped jobs, numbered |
-| `web/app/dashboard/digest/TailorButton.tsx` | Cached dual-PDF download |
+| `web/app/dashboard/digest/page.tsx` | Digest — grouped, numbered, source-badged |
 | `web/app/dashboard/digest/ApplyButton.tsx` | Easy Apply button |
 | `web/app/dashboard/digest/RunDigestButton.tsx` | Run + live status polling |
-| `web/app/dashboard/digest/ClearDigestButton.tsx` | Clear digest with confirm |
+| `web/app/dashboard/digest/ClearDigestButton.tsx` | Clear digest |
+| `web/app/api/apply/route.ts` | Apply proxy to Railway |
+| `web/app/api/run-digest/route.ts` | Run pipeline proxy |
+| `web/app/api/pipeline-status/route.ts` | Status polling proxy |
+| `web/app/api/clear-digest/route.ts` | Delete digest_jobs for user |
