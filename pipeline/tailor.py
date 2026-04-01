@@ -89,13 +89,13 @@ Return ONLY the JSON object, no markdown fences, no explanation."""
             messages=[{"role": "user", "content": prompt}],
         )
         raw = msg.content[0].text.strip() if msg.content else ""
-        if not raw:
-            logger.warning(f"Empty response from Claude for {title} at {company} — skipping tailor")
-            return {"resume_markdown": resume_text, "cover_letter": "", "fit_summary": ""}
         # Strip markdown fences if present
         raw = re.sub(r"```(?:json)?\s*", "", raw)
         raw = re.sub(r"\s*```", "", raw)
         raw = raw.strip()
+        if not raw:
+            logger.warning(f"Empty response from Claude for {title} at {company} — skipping tailor")
+            return {"resume_markdown": resume_text, "cover_letter": "", "fit_summary": ""}
         brace_idx = raw.find("{")
         if brace_idx > 0:
             raw = raw[brace_idx:]

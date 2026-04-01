@@ -132,7 +132,10 @@ def run(on_step=None):
         # 4. Tailor resume for top matches
         for i, job in enumerate(ranked[:TOP_TAILOR_COUNT]):
             if resume_text:
-                ranked[i]["tailored_resume"] = tailor_resume(resume_text, job)
+                try:
+                    ranked[i]["tailored_resume"] = tailor_resume(resume_text, job)
+                except Exception as e:
+                    logger.error(f"Tailoring failed for {job.get('title')} at {job.get('company')}: {e} — continuing")
 
         _step(f"Saving {len(ranked)} jobs to digest")
 
