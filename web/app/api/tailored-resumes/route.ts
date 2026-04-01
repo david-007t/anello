@@ -10,7 +10,7 @@ export async function GET() {
   const { data: files, error } = await supabase.storage.from("tailored-resumes").list(userId);
   if (error || !files || files.length === 0) return NextResponse.json({ resumes: [] });
 
-  const resumes = await Promise.all(
+  const all = await Promise.all(
     files.map(async (f) => {
       const { data: signed } = await supabase.storage
         .from("tailored-resumes")
@@ -19,7 +19,10 @@ export async function GET() {
     })
   );
 
-  return NextResponse.json({ resumes });
+  const resumes = all.filter((f) => !f.name.endsWith("-cover-letter.pdf"));
+  const cover_letters = all.filter((f) => f.name.endsWith("-cover-letter.pdf"));
+
+  return NextResponse.json({ resumes, cover_letters });
 }
 
 export async function DELETE(req: Request) {

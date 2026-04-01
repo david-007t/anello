@@ -14,6 +14,7 @@ export default function ResumePage() {
   const [status, setStatus] = useState<"idle" | "loading" | "uploading" | "done" | "error">("loading");
   const [error, setError] = useState("");
   const [tailored, setTailored] = useState<TailoredResume[]>([]);
+  const [coverLetters, setCoverLetters] = useState<TailoredResume[]>([]);
   const [tailoredLoading, setTailoredLoading] = useState(true);
 
   useEffect(() => {
@@ -32,8 +33,11 @@ export default function ResumePage() {
     setTailoredLoading(true);
     fetch("/api/tailored-resumes")
       .then((r) => r.json())
-      .then(({ resumes }) => setTailored(resumes ?? []))
-      .catch(() => setTailored([]))
+      .then(({ resumes, cover_letters }) => {
+        setTailored(resumes ?? []);
+        setCoverLetters(cover_letters ?? []);
+      })
+      .catch(() => { setTailored([]); setCoverLetters([]); })
       .finally(() => setTailoredLoading(false));
   }
 
@@ -155,6 +159,42 @@ export default function ResumePage() {
                     onClick={() => handleDelete(r.name)}
                     className="text-xs font-medium text-red-500 hover:text-red-700"
                   >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Cover Letters */}
+      <div className="mt-8 max-w-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-slate-900">Cover Letters</h2>
+          {!tailoredLoading && (
+            <span className="text-xs text-slate-400">{coverLetters.length} saved</span>
+          )}
+        </div>
+
+        {tailoredLoading ? (
+          <p className="text-sm text-slate-400">Loading…</p>
+        ) : coverLetters.length === 0 ? (
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 text-center">
+            <p className="text-sm text-slate-400">No cover letters yet. Use "Cover Letter" on a job in your digest.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {coverLetters.map((r) => (
+              <div key={r.name} className="bg-white border border-slate-100 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+                <span className="text-sm text-slate-700 truncate">{r.name}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  {r.url && (
+                    <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-brand-600 hover:text-brand-700">
+                      Download
+                    </a>
+                  )}
+                  <button onClick={() => handleDelete(r.name)} className="text-xs font-medium text-red-500 hover:text-red-700">
                     Delete
                   </button>
                 </div>
