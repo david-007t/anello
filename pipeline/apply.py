@@ -345,26 +345,9 @@ def apply_to_job(
         }
     """
     url = job.get("url", job.get("apply_url", ""))
+
+    # Pre-check: if URL already resolves to a known ATS, skip navigation overhead
     ats = detect_ats(url)
-
-    if ats == "workday":
-        logger.warning(f"Workday application skipped (too complex): {url}")
-        return {
-            "success": False,
-            "ats": "workday",
-            "confirmation": "",
-            "error": "Workday requires manual application — too complex for automation",
-            "screenshot_b64": "",
-        }
-
-    if ats == "unknown":
-        return {
-            "success": False,
-            "ats": "unknown",
-            "confirmation": "",
-            "error": f"Unrecognized ATS for URL: {url}",
-            "screenshot_b64": "",
-        }
 
     from playwright.sync_api import sync_playwright
 
@@ -373,6 +356,38 @@ def apply_to_job(
         context = browser.new_context()
         page = context.new_page()
         try:
+            # If ATS unknown (e.g. Adzuna redirect URL), navigate and re-detect from resolved URL
+            if ats == "unknown":
+                try:
+                    page.goto(url, timeout=30000)
+                    page.wait_for_timeout(1500)
+                    resolved_url = page.url
+                    ats = detect_ats(resolved_url)
+                    # Update job URL to resolved URL so ATS handlers use it directly
+                    job = {**job, "url": resolved_url}
+                    logger.info(f"Resolved redirect: {url} → {resolved_url} (ats={ats})")
+                except Exception as e:
+                    logger.error(f"Failed to resolve redirect for {url}: {e}")
+
+            if ats == "workday":
+                logger.warning(f"Workday application skipped (too complex): {url}")
+                return {
+                    "success": False,
+                    "ats": "workday",
+                    "confirmation": "",
+                    "error": "Workday requires manual application — too complex for automation",
+                    "screenshot_b64": "",
+                }
+
+            if ats == "unknown":
+                return {
+                    "success": False,
+                    "ats": "unknown",
+                    "confirmation": "",
+                    "error": f"Unrecognized ATS after redirect resolution: {job.get('url', url)}",
+                    "screenshot_b64": "",
+                }
+
             if ats == "greenhouse":
                 result = _apply_greenhouse(page, job, applicant, resume_path, cover_letter_path)
             elif ats == "lever":
