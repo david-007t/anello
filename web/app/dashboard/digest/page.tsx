@@ -19,7 +19,7 @@ interface DigestJob {
 }
 
 interface GroupedJob {
-  id: string; // primary job_id (for tailor/apply)
+  id: string;
   company: string;
   role: string;
   job_url: string;
@@ -60,6 +60,95 @@ function groupJobs(jobs: DigestJob[]): GroupedJob[] {
   return Array.from(map.values());
 }
 
+function detectAts(url: string): "greenhouse" | "lever" | "ashby" | "workable" | "workday" | "unknown" {
+  if (!url) return "unknown";
+  const u = url.toLowerCase();
+  if (u.includes("boards.greenhouse.io") || u.includes("greenhouse.io/jobs")) return "greenhouse";
+  if (u.includes("jobs.lever.co")) return "lever";
+  if (u.includes("jobs.ashby.com")) return "ashby";
+  if (u.includes("apply.workable.com")) return "workable";
+  if (u.includes(".myworkdayjobs.com") || u.includes("workday.com")) return "workday";
+  return "unknown";
+}
+
+function canAutoApply(url: string): boolean {
+  const ats = detectAts(url);
+  return ats === "greenhouse" || ats === "lever" || ats === "ashby" || ats === "workable";
+}
+
+function JobCard({ job, index, showApply }: { job: GroupedJob; index: number; showApply: boolean }) {
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start gap-4">
+      <span className="text-2xl font-black text-slate-300 select-none w-8 shrink-0 leading-none mt-0.5">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          <a
+            href={job.job_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-indigo-600 hover:underline"
+          >
+            {job.role}
+          </a>
+          {job.applied && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+              Applied
+            </span>
+          )}
+          {job.source && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-400 capitalize">
+              {job.source}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-slate-700 font-medium">{job.company}</p>
+        {job.locations.length > 0 && (
+          <p className="text-xs text-slate-400 mt-0.5">
+            {job.locations.slice(0, 3).join(" · ")}
+            {job.locations.length > 3 && ` +${job.locations.length - 3} more`}
+          </p>
+        )}
+        {job.salaries.length > 0 && (
+          <p className="text-xs text-slate-500 mt-0.5">
+            {job.salaries.length === 1
+              ? job.salaries[0]
+              : (() => {
+                  const nums = job.salaries
+                    .flatMap((s) => s.replace(/[$,]/g, "").split("–").map(Number))
+                    .filter(Boolean);
+                  const lo = Math.min(...nums);
+                  const hi = Math.max(...nums);
+                  return lo === hi
+                    ? `$${lo.toLocaleString()}`
+                    : `$${lo.toLocaleString()}–$${hi.toLocaleString()}`;
+                })()}
+          </p>
+        )}
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <TailorButton jobId={job.id} jobNumber={index + 1} />
+          {showApply ? (
+            <ApplyButton jobId={job.id} />
+          ) : (
+            <a
+              href={job.job_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap"
+            >
+              Open Job
+            </a>
+          )}
+        </div>
+      </div>
+      <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
+        {formatDate(job.matched_at)}
+      </span>
+    </div>
+  );
+}
+
 export default async function DigestPage() {
   const user = await currentUser();
   let jobs: DigestJob[] = [];
@@ -76,6 +165,8 @@ export default async function DigestPage() {
   }
 
   const grouped = groupJobs(jobs);
+  const autoApplyJobs = grouped.filter((j) => canAutoApply(j.job_url));
+  const manualJobs = grouped.filter((j) => !canAutoApply(j.job_url));
 
   return (
     <div className="p-8">
@@ -101,75 +192,38 @@ export default async function DigestPage() {
           <p className="text-xs text-slate-400">Your first digest will arrive once preferences are set.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 max-w-2xl">
-          {grouped.map((job, index) => (
-            <div key={job.id} className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start gap-4">
-              {/* Job number */}
-              <span className="text-2xl font-black text-slate-300 select-none w-8 shrink-0 leading-none mt-0.5">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <a
-                    href={job.job_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-indigo-600 hover:underline"
-                  >
-                    {job.role}
-                  </a>
-                  {job.applied && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                      Applied
-                    </span>
-                  )}
-                  {job.source && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-400 capitalize">
-                      {job.source}
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-sm text-slate-700 font-medium">{job.company}</p>
-
-                {/* Locations */}
-                {job.locations.length > 0 && (
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {job.locations.slice(0, 3).join(" · ")}
-                    {job.locations.length > 3 && ` +${job.locations.length - 3} more`}
-                  </p>
-                )}
-
-                {/* Salaries — show range if multiple */}
-                {job.salaries.length > 0 && (
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {job.salaries.length === 1
-                      ? job.salaries[0]
-                      : (() => {
-                          const nums = job.salaries
-                            .flatMap((s) => s.replace(/[$,]/g, "").split("–").map(Number))
-                            .filter(Boolean);
-                          const lo = Math.min(...nums);
-                          const hi = Math.max(...nums);
-                          return lo === hi
-                            ? `$${lo.toLocaleString()}`
-                            : `$${lo.toLocaleString()}–$${hi.toLocaleString()}`;
-                        })()}
-                  </p>
-                )}
-
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <TailorButton jobId={job.id} jobNumber={index + 1} />
-                  <ApplyButton jobId={job.id} />
-                </div>
+        <div className="flex flex-col gap-8 max-w-2xl">
+          {autoApplyJobs.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-semibold text-slate-700">Auto-Apply</h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  {autoApplyJobs.length} job{autoApplyJobs.length !== 1 ? "s" : ""}
+                </span>
               </div>
+              <div className="flex flex-col gap-3">
+                {autoApplyJobs.map((job, index) => (
+                  <JobCard key={job.id} job={job} index={index} showApply={true} />
+                ))}
+              </div>
+            </section>
+          )}
 
-              <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
-                {formatDate(job.matched_at)}
-              </span>
-            </div>
-          ))}
+          {manualJobs.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-semibold text-slate-700">Apply Manually</h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                  {manualJobs.length} job{manualJobs.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {manualJobs.map((job, index) => (
+                  <JobCard key={job.id} job={job} index={index} showApply={false} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>

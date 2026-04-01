@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def detect_ats(url: str) -> str:
-    """Returns 'greenhouse' | 'lever' | 'workday' | 'unknown'"""
+    """Returns 'greenhouse' | 'lever' | 'ashby' | 'workable' | 'workday' | 'unknown'"""
     if not url:
         return "unknown"
     url_lower = url.lower()
@@ -23,6 +23,10 @@ def detect_ats(url: str) -> str:
         return "greenhouse"
     if "jobs.lever.co" in url_lower:
         return "lever"
+    if "jobs.ashby.com" in url_lower:
+        return "ashby"
+    if "apply.workable.com" in url_lower:
+        return "workable"
     if ".myworkdayjobs.com" in url_lower or "workday.com" in url_lower:
         return "workday"
     return "unknown"
@@ -403,6 +407,16 @@ def apply_to_job(
                     "ats": "workday",
                     "confirmation": "",
                     "error": "Workday requires manual application — too complex for automation",
+                    "screenshot_b64": "",
+                }
+
+            if ats in ("ashby", "workable"):
+                logger.warning(f"{ats} automation not yet implemented: {url}")
+                return {
+                    "success": False,
+                    "ats": ats,
+                    "confirmation": "",
+                    "error": f"{ats.title()} auto-apply coming soon",
                     "screenshot_b64": "",
                 }
 
