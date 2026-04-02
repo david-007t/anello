@@ -11,7 +11,6 @@ export default async function DashboardPage() {
     try {
       const now = new Date();
       const firstOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-      const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
 
       const [{ count: appCount }, { count: digestCount }] = await Promise.all([
         supabaseAdmin()
@@ -22,8 +21,7 @@ export default async function DashboardPage() {
         supabaseAdmin()
           .from("digest_jobs")
           .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("matched_at", startOfToday),
+          .eq("user_id", user.id),
       ]);
 
       if (appCount !== null) applicationsSentThisMonth = String(appCount);
@@ -47,7 +45,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Applications sent", value: applicationsSentThisMonth, sub: "this month" },
-          { label: "Jobs in digest", value: jobsInDigestToday, sub: "today" },
+          { label: "Jobs in digest", value: jobsInDigestToday, sub: "in digest" },
           { label: "Responses", value: "—", sub: "total" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-slate-100 rounded-2xl p-5">

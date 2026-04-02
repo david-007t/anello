@@ -114,13 +114,15 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
 
             apply_url = r.get("job_apply_link") or ""
             google_url = r.get("job_google_link") or ""
+            job_apply_is_direct = r.get("job_apply_is_direct", False)
+            url = apply_url if job_apply_is_direct else ""
             display_url = apply_url or google_url  # for human browsing
 
             jobs.append({
                 "title": r.get("job_title", ""),
                 "company": r.get("employer_name", ""),
                 "location": location_str,
-                "url": apply_url,
+                "url": url,
                 "display_url": display_url,
                 "description": r.get("job_description", "")[:3000],
                 "salary_min": salary_min,

@@ -381,7 +381,7 @@ body {
 }
 
 .role-title {
-    font-style: italic;
+    font-style: normal;
     font-size: 10pt;
     margin-top: 3px;
     margin-bottom: 2px;
@@ -391,7 +391,7 @@ body {
 }
 
 .role-location {
-    font-style: italic;
+    font-style: normal;
     font-size: 9.5pt;
     color: #111;
     white-space: nowrap;
