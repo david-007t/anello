@@ -64,6 +64,8 @@ def _fmt_salary(job: dict) -> str:
 def _send_ntfy(job: dict, minutes: int, apply_url: str) -> bool:
     """Send push notification via ntfy.sh."""
     title = f"New match: {job.get('title', '')} at {job.get('company', '')}"
+    # HTTP headers must be ASCII — replace non-ASCII chars
+    title_ascii = title.encode("ascii", errors="replace").decode("ascii")
     salary = _fmt_salary(job)
     location = job.get("location", "")
     parts = [p for p in [location, salary, f"posted {_fmt_age(minutes)}"] if p]
@@ -74,7 +76,7 @@ def _send_ntfy(job: dict, minutes: int, apply_url: str) -> bool:
             f"https://ntfy.sh/{NTFY_TOPIC}",
             content=body.encode("utf-8"),
             headers={
-                "Title": title,
+                "Title": title_ascii,
                 "Priority": "high",
                 "Tags": "briefcase",
             },
@@ -84,7 +86,7 @@ def _send_ntfy(job: dict, minutes: int, apply_url: str) -> bool:
         logger.info(f"[notifier] ntfy sent: {title}")
         return True
     except Exception as e:
-        logger.error(f"[notifier] ntfy failed: {e}")
+        logger.warning(f"[notifier] ntfy failed: {e}")
         return False
 
 

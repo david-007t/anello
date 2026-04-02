@@ -207,7 +207,7 @@ def run(on_step=None, send_digest: bool = True):
             try:
                 from datetime import datetime, timezone, timedelta
                 cutoff = (datetime.now(timezone.utc) - timedelta(hours=FRESHNESS_HOURS)).isoformat()
-                db.table("digest_jobs").delete().eq("user_id", user_id).lt("created_at", cutoff).execute()
+                db.table("digest_jobs").delete().eq("user_id", user_id).lt("matched_at", cutoff).execute()
                 logger.info(f"Pruned digest_jobs older than {FRESHNESS_HOURS}h for user {user_id}")
             except Exception as e:
                 logger.warning(f"Could not prune digest_jobs: {e}")
