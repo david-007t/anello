@@ -108,11 +108,13 @@ def _send_email(
     company = job.get("company", "")
     location = job.get("location", "")
     salary = _fmt_salary(job)
+    source = (job.get("source") or "").lower()
 
     subject = f"New match: {title} at {company} — posted {_fmt_age(minutes)}"
 
     # Build HTML body
     salary_html = f"<p style='color:#64748b;'>Salary: {salary}</p>" if salary else ""
+    source_html = f"<span style='display:inline-block;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:0.05em;'>{source}</span>" if source else ""
     cover_html = ""
     if cover_letter:
         escaped = cover_letter.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -131,9 +133,10 @@ def _send_email(
         <h1 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 4px;">
           {title}
         </h1>
-        <p style="color:#64748b;font-size:14px;margin:0 0 8px;">
+        <p style="color:#64748b;font-size:14px;margin:0 0 6px;">
           {company} · {location}
         </p>
+        <p style="margin:0 0 8px;">{source_html}</p>
         {salary_html}
         <p style="color:#94a3b8;font-size:13px;margin:0 0 16px;">
           Posted {_fmt_age(minutes)}
