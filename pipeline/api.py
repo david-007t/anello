@@ -51,9 +51,9 @@ _scheduler = BackgroundScheduler()
 def start_scheduler():
     from main import run
     # Intraday polls every 3 hours — fetch fresh jobs + fire notifications, no batch email
-    _scheduler.add_job(lambda: run(send_digest=False), "interval", hours=3, timezone="UTC")
+    _scheduler.add_job(lambda: run(send_digest_email=False), "interval", hours=3, timezone="UTC")
     # Daily digest at 14:00 UTC — full run including batch digest email + prune stale rows
-    _scheduler.add_job(lambda: run(send_digest=True), "cron", hour=14, minute=0, timezone="UTC")
+    _scheduler.add_job(lambda: run(send_digest_email=True), "cron", hour=14, minute=0, timezone="UTC")
     _scheduler.start()
     logger.info("Scheduler started — intraday polls every 3h · daily digest at 14:00 UTC")
 
@@ -448,7 +448,7 @@ def run_pipeline():
         })
         try:
             from main import run
-            run(on_step=lambda msg: _pipeline_state.update({"step": msg}), send_digest=True)
+            run(on_step=lambda msg: _pipeline_state.update({"step": msg}), send_digest_email=True)
             _pipeline_state.update({
                 "status": "complete",
                 "step": "Done",

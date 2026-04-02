@@ -45,7 +45,7 @@ FRESHNESS_HOURS = 48
 TOP_TAILOR_COUNT = 5  # tailor resume for top N matches only
 
 
-def run(on_step=None, send_digest: bool = True):
+def run(on_step=None, send_digest_email: bool = True):
     """
     Run the full pipeline. Optional on_step(msg: str) callback receives
     human-readable status updates at each key stage.
@@ -203,7 +203,7 @@ def run(on_step=None, send_digest: bool = True):
         _step(f"Saving {len(ranked)} jobs to digest")
 
         # Prune digest_jobs: remove rows older than FRESHNESS_HOURS on digest runs
-        if send_digest:
+        if send_digest_email:
             try:
                 from datetime import datetime, timezone, timedelta
                 cutoff = (datetime.now(timezone.utc) - timedelta(hours=FRESHNESS_HOURS)).isoformat()
@@ -241,7 +241,7 @@ def run(on_step=None, send_digest: bool = True):
         _step("Sending digest email")
 
         # 6. Send digest email (only on scheduled daily digest, not intraday polls)
-        if send_digest:
+        if send_digest_email:
             if user_email:
                 send_digest(user_email, user_name, ranked)
             else:

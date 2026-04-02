@@ -69,7 +69,7 @@ def _send_ntfy(job: dict, minutes: int, apply_url: str) -> bool:
     salary = _fmt_salary(job)
     location = job.get("location", "")
     parts = [p for p in [location, salary, f"posted {_fmt_age(minutes)}"] if p]
-    body = " · ".join(parts) + f"\n{apply_url}"
+    body = " · ".join(parts) + "\nhttps://anelo.io/dashboard/digest"
 
     try:
         resp = httpx.post(
