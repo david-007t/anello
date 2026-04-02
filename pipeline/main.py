@@ -107,6 +107,13 @@ def run(on_step=None):
                 seen_jobs.add(key)
                 deduped.append(job)
         ranked = deduped
+
+        # Sort: direct ATS URLs (auto-applicable) first, aggregator/unknown last
+        _ATS_HOSTS = ("greenhouse.io", "lever.co", "ashby.com", "workable.com", "teamtailor.com")
+        def _ats_priority(job):
+            url = (job.get("url") or "").lower()
+            return 0 if any(h in url for h in _ATS_HOSTS) else 1
+        ranked.sort(key=_ats_priority)
         logger.info(f"After dedup: {len(ranked)} unique jobs")
 
         # 3. Get user's resume text
