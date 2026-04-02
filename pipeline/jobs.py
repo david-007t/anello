@@ -99,6 +99,9 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
         )
         resp.raise_for_status()
         data = resp.json()
+        if not data or not isinstance(data, dict):
+            logger.error(f"[jsearch] Unexpected response for role='{role}': {data!r}")
+            return []
         if data.get("status") != "OK" or not data.get("data"):
             logger.error(f"[jsearch] API error for role='{role}': {data.get('message') or data}")
             return []
