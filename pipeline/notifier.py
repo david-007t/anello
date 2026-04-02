@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "anelo-jobs")
 resend.api_key = os.environ.get("RESEND_API_KEY", "")
 
-MAX_AGE_MINUTES = 120  # 2 hours
+MAX_AGE_MINUTES = 1440  # 24 hours
 
 
 def _parse_posted_at(posted_at: str) -> datetime | None:
@@ -43,6 +43,15 @@ def _minutes_ago(dt: datetime) -> int:
     return int(delta.total_seconds() / 60)
 
 
+def _fmt_age(minutes: int) -> str:
+    """Format age as 'X minutes ago' or 'X hours ago'."""
+    if minutes < 60:
+        return f"{minutes} minutes ago"
+    hours = round(minutes / 60, 1)
+    hours_str = f"{int(hours)}h" if hours == int(hours) else f"{hours}h"
+    return f"{hours_str} ago"
+
+
 def _fmt_salary(job: dict) -> str:
     lo, hi = job.get("salary_min"), job.get("salary_max")
     if lo and hi:
@@ -57,7 +66,7 @@ def _send_ntfy(job: dict, minutes: int, apply_url: str) -> bool:
     title = f"New match: {job.get('title', '')} at {job.get('company', '')}"
     salary = _fmt_salary(job)
     location = job.get("location", "")
-    parts = [p for p in [location, salary, f"posted {minutes} minutes ago"] if p]
+    parts = [p for p in [location, salary, f"posted {_fmt_age(minutes)}"] if p]
     body = " · ".join(parts) + f"\n{apply_url}"
 
     try:
@@ -98,7 +107,7 @@ def _send_email(
     location = job.get("location", "")
     salary = _fmt_salary(job)
 
-    subject = f"New match: {title} at {company} — posted {minutes} minutes ago"
+    subject = f"New match: {title} at {company} — posted {_fmt_age(minutes)}"
 
     # Build HTML body
     salary_html = f"<p style='color:#64748b;'>Salary: {salary}</p>" if salary else ""
@@ -125,7 +134,7 @@ def _send_email(
         </p>
         {salary_html}
         <p style="color:#94a3b8;font-size:13px;margin:0 0 16px;">
-          Posted {minutes} minutes ago
+          Posted {_fmt_age(minutes)}
         </p>
         <a href="{apply_url}" style="display:inline-block;background:#4f46e5;color:#fff;font-weight:600;font-size:14px;padding:10px 20px;border-radius:10px;text-decoration:none;">
           Apply now
