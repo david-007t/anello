@@ -41,6 +41,7 @@ def _fetch_adzuna_for_role(role: str, location: str, min_salary, max_results: in
             params["salary_min"] = int(min_salary)
         except (ValueError, TypeError):
             pass
+    params["max_days_old"] = 1
 
     try:
         url = f"{ADZUNA_BASE}/us/search/1"

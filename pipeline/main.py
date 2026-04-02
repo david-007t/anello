@@ -41,10 +41,11 @@ SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or os.environ.get("SUP
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 MAX_JOBS_PER_USER = 20
+FRESHNESS_HOURS = 48
 TOP_TAILOR_COUNT = 5  # tailor resume for top N matches only
 
 
-def run(on_step=None):
+def run(on_step=None, send_digest: bool = True):
     """
     Run the full pipeline. Optional on_step(msg: str) callback receives
     human-readable status updates at each key stage.
@@ -129,6 +130,24 @@ def run(on_step=None):
         ranked.sort(key=_ats_priority)
         logger.info(f"After dedup: {len(ranked)} unique jobs")
 
+        # Freshness filter: only keep jobs posted within FRESHNESS_HOURS
+        from notifier import _parse_posted_at, _minutes_ago
+        fresh = []
+        for job in ranked:
+            posted_at = job.get("posted_at")
+            if not posted_at:
+                continue
+            dt = _parse_posted_at(posted_at)
+            if dt is None:
+                continue
+            if _minutes_ago(dt) <= FRESHNESS_HOURS * 60:
+                fresh.append(job)
+        if fresh:
+            logger.info(f"Freshness filter: {len(fresh)}/{len(ranked)} jobs within {FRESHNESS_HOURS}h")
+            ranked = fresh
+        else:
+            logger.info(f"Freshness filter: no jobs within {FRESHNESS_HOURS}h — keeping all {len(ranked)}")
+
         # 3. Get user's resume text
         resume_res = (
             db.table("resumes")
@@ -183,6 +202,16 @@ def run(on_step=None):
 
         _step(f"Saving {len(ranked)} jobs to digest")
 
+        # Prune digest_jobs: remove rows older than FRESHNESS_HOURS on digest runs
+        if send_digest:
+            try:
+                from datetime import datetime, timezone, timedelta
+                cutoff = (datetime.now(timezone.utc) - timedelta(hours=FRESHNESS_HOURS)).isoformat()
+                db.table("digest_jobs").delete().eq("user_id", user_id).lt("created_at", cutoff).execute()
+                logger.info(f"Pruned digest_jobs older than {FRESHNESS_HOURS}h for user {user_id}")
+            except Exception as e:
+                logger.warning(f"Could not prune digest_jobs: {e}")
+
         # 5. Save to digest_jobs
         rows = []
         for job in ranked:
@@ -211,11 +240,12 @@ def run(on_step=None):
 
         _step("Sending digest email")
 
-        # 6. Send digest email
-        if user_email:
-            send_digest(user_email, user_name, ranked)
-        else:
-            logger.info(f"No email for user {user_id} — skipping digest send")
+        # 6. Send digest email (only on scheduled daily digest, not intraday polls)
+        if send_digest:
+            if user_email:
+                send_digest(user_email, user_name, ranked)
+            else:
+                logger.info(f"No email for user {user_id} — skipping digest send")
 
     logger.info("Pipeline run complete")
 
