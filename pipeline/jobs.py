@@ -57,6 +57,7 @@ def _fetch_adzuna_for_role(role: str, location: str, min_salary, max_results: in
                 "description": r.get("description", ""),
                 "salary_min": r.get("salary_min"),
                 "salary_max": r.get("salary_max"),
+                "posted_at": r.get("created", ""),
                 "source": "adzuna",
             })
         logger.info(f"[adzuna] Fetched {len(jobs)} jobs for role='{role}'")
@@ -81,7 +82,7 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
     params = {
         "query": query,
         "num_pages": "2",
-        "date_posted": "week",
+        "date_posted": "today",
     }
     if is_remote:
         params["remote_jobs_only"] = "true"
@@ -127,6 +128,7 @@ def _fetch_jsearch_for_role(role: str, location: str, min_salary, max_results: i
                 "description": r.get("job_description", "")[:3000],
                 "salary_min": salary_min,
                 "salary_max": salary_max,
+                "posted_at": r.get("job_posted_at_datetime_utc", ""),
                 "source": "jsearch",
             })
         logger.info(f"[jsearch] Fetched {len(jobs)} jobs for role='{role}'")
@@ -174,8 +176,10 @@ def fetch_jobs(prefs: dict, max_results: int = 20) -> list[dict]:
             try:
                 for job in future.result():
                     url = job.get("url", "")
-                    if url and url not in seen_urls:
-                        seen_urls.add(url)
+                    display_url = job.get("display_url", "")
+                    dedup_key = url or display_url or ""
+                    if dedup_key and dedup_key not in seen_urls:
+                        seen_urls.add(dedup_key)
                         all_jobs.append(job)
             except Exception as e:
                 logger.error(f"Job fetch task failed: {e}")

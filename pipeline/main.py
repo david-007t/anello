@@ -35,6 +35,7 @@ from jobs import fetch_jobs
 from scorer import filter_and_rank
 from tailor import tailor_resume
 from digest import send_digest
+from notifier import notify_match, already_notified, log_notification
 
 SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
@@ -76,6 +77,18 @@ def run(on_step=None):
         if not prefs.get("role"):
             logger.info(f"Skipping {user_id} — no role set")
             continue
+
+        # Look up user email/name early — needed for notifications + digest
+        user_res = (
+            db.table("users")
+            .select("email,first_name")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        user_row = user_res.data[0] if user_res.data else {}
+        user_email = user_row.get("email", "")
+        user_name = user_row.get("first_name", "")
 
         roles = [r for r in [prefs.get("role"), prefs.get("role_2"), prefs.get("role_3")] if r]
         _step(f"Fetching jobs for {', '.join(roles)} · {prefs.get('location', 'any location')}")
@@ -146,6 +159,28 @@ def run(on_step=None):
                 except Exception as e:
                     logger.error(f"Tailoring failed for {job.get('title')} at {job.get('company')}: {e} — continuing")
 
+        # 4b. Send real-time notifications for fresh matches
+        _step(f"Sending notifications for fresh matches")
+        notified_count = 0
+        for i, job in enumerate(ranked):
+            job_url = job.get("url") or job.get("display_url", "")
+            if already_notified(db, user_id, job_url):
+                continue
+
+            # Cover letter is only available if we tailored (top N only)
+            # tailor_resume() returns a string (resume_markdown), not a dict —
+            # so no cover letter is available through this path.
+            cover_letter = ""
+            resume_pdf = b""
+
+            sent = notify_match(job, user_email, user_name, cover_letter, resume_pdf)
+            if sent:
+                log_notification(db, user_id, job)
+                notified_count += 1
+
+        if notified_count:
+            logger.info(f"Sent {notified_count} real-time notifications for user {user_id}")
+
         _step(f"Saving {len(ranked)} jobs to digest")
 
         # 5. Save to digest_jobs
@@ -176,17 +211,7 @@ def run(on_step=None):
 
         _step("Sending digest email")
 
-        # 6. Send digest email — look up email from users table
-        user_res = (
-            db.table("users")
-            .select("email,first_name")
-            .eq("id", user_id)
-            .limit(1)
-            .execute()
-        )
-        user_row = user_res.data[0] if user_res.data else {}
-        user_email = user_row.get("email", "")
-        user_name = user_row.get("first_name", "")
+        # 6. Send digest email
         if user_email:
             send_digest(user_email, user_name, ranked)
         else:
