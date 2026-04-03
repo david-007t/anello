@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import WaitlistForm from "./components/WaitlistForm";
+import ContinueWithGoogle from "./components/ContinueWithGoogle";
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { RadarSection } from './components/RadarSection';
 import { HoverButton } from '@/components/ui/hover-button';
@@ -89,7 +89,7 @@ export default function HomePage() {
               Anelo scans the web, identifies the freshest job postings, and tailors your resume — every day, automatically.
             </p>
             <div id="waitlist" className="flex justify-center w-full">
-              <WaitlistForm />
+              <ContinueWithGoogle />
             </div>
           </FadeInSection>
         </section>

@@ -26,8 +26,8 @@ const labelClass = 'text-sm font-medium text-white/70 mb-1.5 block';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useUser();
-  const [step, setStep] = useState<1 | 2>(1);
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormState>({
     role: '',
@@ -56,7 +56,7 @@ export default function OnboardingPage() {
     } catch {
       // proceed regardless
     }
-    router.push('/dashboard');
+    setStep(3);
   }
 
   if (!isLoaded) {
@@ -94,8 +94,8 @@ export default function OnboardingPage() {
 
         {/* Content */}
         <div className="max-w-lg mx-auto px-6 py-16">
-          {/* Step indicator */}
-          <div className="flex items-center gap-4 mb-10">
+          {/* Step indicator — hidden on step 3 */}
+          {step !== 3 && <div className="flex items-center gap-4 mb-10">
             {/* Step 1 */}
             <div className="flex items-center gap-2">
               <div
@@ -126,10 +126,10 @@ export default function OnboardingPage() {
                 Filter noise
               </span>
             </div>
-          </div>
+          </div>}
 
           {/* Step counter */}
-          <p className="text-xs text-white/40 mb-4">Step {step} of 2</p>
+          {step !== 3 && <p className="text-xs text-white/40 mb-4">Step {step} of 2</p>}
 
           {step === 1 && (
             <motion.div
@@ -292,6 +292,40 @@ export default function OnboardingPage() {
                     ← Back
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div
+              key="step-3"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center text-center space-y-4">
+                <div className="w-14 h-14 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mb-6">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 13l4 4L19 7" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h1 className="text-3xl font-bold text-white">You&apos;re all set.</h1>
+                <p className="text-slate-400 text-sm leading-relaxed text-center">
+                  Job alerts are on their way to<br />
+                  <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span>
+                  <br /><br />
+                  Anelo runs multiple times a day — you&apos;ll hear from us soon.
+                </p>
+                <HoverButton
+                  onClick={() => router.push('/dashboard')}
+                  backgroundColor="rgba(255,255,255,0.05)"
+                  glowColor="#9ca3af"
+                  textColor="#e5e7eb"
+                  hoverTextColor="#ffffff"
+                  className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full mt-2"
+                >
+                  Go to dashboard →
+                </HoverButton>
               </div>
             </motion.div>
           )}
