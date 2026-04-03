@@ -157,7 +157,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-white/5 border-y border-white/10 py-20">
+      <section className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
@@ -218,7 +218,7 @@ export default function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section className="bg-white/5 border-y border-white/10 py-20">
+      <section className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
