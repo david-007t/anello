@@ -35,18 +35,21 @@ export default function HomePage() {
     offset: ['start start', 'end end'],
   });
 
-  // Section 1 (Radar): visible 0 → 0.4
-  const radarOpacity = useTransform(scrollYProgress, [0, 0.25, 0.4], [1, 1, 0]);
-  // Section 2 (Hero): 0.25 → 0.75
-  const heroOpacity = useTransform(scrollYProgress, [0.25, 0.4, 0.6, 0.75], [0, 1, 1, 0]);
-  // Section 3 (How It Works): 0.6 → 1.0
-  const howOpacity = useTransform(scrollYProgress, [0.6, 0.75, 1.0], [0, 1, 1]);
+  // Sequential fades — each section fully gone before the next appears
+  // Radar: visible → fades out 0.25–0.35
+  const radarOpacity = useTransform(scrollYProgress, [0, 0.25, 0.35], [1, 1, 0]);
+  // Hero: fades in 0.35–0.44, holds, fades out 0.60–0.68
+  const heroOpacity = useTransform(scrollYProgress, [0.35, 0.44, 0.60, 0.68], [0, 1, 1, 0]);
+  // How It Works: fades in 0.68–0.77, holds to end
+  const howOpacity = useTransform(scrollYProgress, [0.68, 0.77, 1.0], [0, 1, 1]);
 
-  // Scroll hint arrow fades out as user starts scrolling
+  // Scroll hint fades out as user starts scrolling
   const hintOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
-  function scrollToBottom() {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  function scrollToHero() {
+    if (!spacerRef.current) return;
+    const scrollable = spacerRef.current.offsetHeight - window.innerHeight;
+    window.scrollTo({ top: scrollable * 0.44, behavior: 'smooth' });
   }
 
   return (
@@ -65,7 +68,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-black tracking-tight text-white">anelo</span>
           <HoverButton
-            onClick={scrollToBottom}
+            onClick={scrollToHero}
             backgroundColor="rgba(255,255,255,0.05)"
             glowColor="#9ca3af"
             textColor="#e5e7eb"
@@ -84,7 +87,7 @@ export default function HomePage() {
 
           {/* Section 1: Radar */}
           <motion.div
-            style={{ opacity: radarOpacity }}
+            style={{ opacity: radarOpacity, pointerEvents: 'none' }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <RadarSection />
@@ -127,7 +130,7 @@ export default function HomePage() {
 
           {/* Section 3: How It Works */}
           <motion.div
-            style={{ opacity: howOpacity }}
+            style={{ opacity: howOpacity, pointerEvents: 'none' }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <div className="max-w-6xl mx-auto px-6 w-full">
