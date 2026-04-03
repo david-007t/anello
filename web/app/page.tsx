@@ -1,5 +1,5 @@
 import WaitlistForm from "./components/WaitlistForm";
-import { DottedSurface } from '@/components/dotted-surface';
+import { GradientDots } from '@/components/ui/gradient-dots';
 
 const features = [
   {
@@ -116,7 +116,12 @@ const plans = [
 export default function HomePage() {
   return (
     <div className="min-h-screen text-white">
-      <DottedSurface />
+      <GradientDots
+        duration={20}
+        colorCycleDuration={8}
+        backgroundColor="#000000"
+        className="fixed inset-0 z-0"
+      />
       <div className="relative z-10">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
