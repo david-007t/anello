@@ -29,11 +29,8 @@ const steps = [
 export default function HomePage() {
   const spacerRef = useRef<HTMLDivElement>(null);
 
-  // Track how far through the 300vh spacer the user has scrolled (window scroll)
-  const { scrollYProgress } = useScroll({
-    target: spacerRef,
-    offset: ['start start', 'end end'],
-  });
+  // Track window scroll progress (0 = top, 1 = bottom of page)
+  const { scrollYProgress } = useScroll();
 
   // Sequential fades — each section fully gone before the next appears
   // Radar: visible → fades out 0.25–0.35
