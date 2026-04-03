@@ -1,4 +1,5 @@
 import WaitlistForm from "./components/WaitlistForm";
+import { DottedSurface } from '@/components/dotted-surface';
 
 const features = [
   {
@@ -115,6 +116,7 @@ const plans = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
+      <DottedSurface />
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
