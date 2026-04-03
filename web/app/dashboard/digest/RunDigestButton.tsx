@@ -18,6 +18,7 @@ export default function RunDigestButton() {
   const [step, setStep] = useState("");
   const router = useRouter();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasSeenRunning = useRef(false);
 
   function stopPolling() {
     if (pollRef.current) {
@@ -28,15 +29,24 @@ export default function RunDigestButton() {
 
   function startPolling() {
     stopPolling();
+    hasSeenRunning.current = false;
     pollRef.current = setInterval(async () => {
       try {
         const res = await fetch("/api/pipeline-status");
         if (!res.ok) return;
         const data: StatusPayload = await res.json();
+
+        if (data.status === "running") {
+          hasSeenRunning.current = true;
+        }
+
         setStatus(data.status);
         setStep(data.step ?? "");
 
         if (data.status === "complete") {
+          // Only accept complete if we actually saw this run go through "running"
+          // Guards against stale "complete" from a previous run
+          if (!hasSeenRunning.current) return;
           stopPolling();
           setTimeout(() => {
             router.refresh();

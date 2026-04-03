@@ -438,14 +438,16 @@ def run_pipeline():
     if _pipeline_state["status"] == "running":
         return {"status": "already_running"}
 
+    # Set running state synchronously before thread starts so first poll sees it
+    _pipeline_state.update({
+        "status": "running",
+        "step": "Starting…",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "error": None,
+    })
+
     def _run():
-        _pipeline_state.update({
-            "status": "running",
-            "step": "Starting…",
-            "started_at": datetime.now(timezone.utc).isoformat(),
-            "finished_at": None,
-            "error": None,
-        })
         try:
             from main import run
             run(on_step=lambda msg: _pipeline_state.update({"step": msg}), send_digest_email=True)
