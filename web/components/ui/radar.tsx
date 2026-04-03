@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { twMerge } from "tailwind-merge";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export const Circle = ({ className, children, idx, ...rest }: any) => {
   return (
@@ -20,6 +20,21 @@ export const Circle = ({ className, children, idx, ...rest }: any) => {
 
 export const Radar = ({ className }: { className?: string }) => {
   const circles = new Array(8).fill(1);
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      const s = String(now.getSeconds()).padStart(2, "0");
+      setTime(`${h}:${m}:${s}`);
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div
       className={twMerge(
@@ -42,6 +57,12 @@ export const Radar = ({ className }: { className?: string }) => {
         className="animate-radar-spin absolute right-1/2 top-1/2 z-40 flex h-[5px] w-[400px] items-end justify-center overflow-hidden bg-transparent"
       >
         <div className="relative z-40 h-[1px] w-full bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
+      </div>
+      {/* Military time display */}
+      <div className="absolute z-50 flex items-center justify-center">
+        <span className="font-mono text-xs font-semibold tracking-widest text-sky-400/70">
+          {time}
+        </span>
       </div>
       {/* Concentric circles */}
       {circles.map((_, idx) => (
