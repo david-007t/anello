@@ -70,13 +70,9 @@ export const Radar = ({ className }: { className?: string }) => {
       {/* Analog clock hands */}
       <div className="absolute z-50 flex items-center justify-center">
         <svg width="40" height="40" viewBox="0 0 40 40">
-          {/* hour */}
           <line x1={cx} y1={cy} x2={hr.x2} y2={hr.y2} stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" />
-          {/* minute */}
           <line x1={cx} y1={cy} x2={min.x2} y2={min.y2} stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" />
-          {/* second */}
           <line x1={cx} y1={cy} x2={sec.x2} y2={sec.y2} stroke="rgba(255,255,255,0.35)" strokeWidth="0.75" strokeLinecap="round" />
-          {/* center dot */}
           <circle cx={cx} cy={cy} r="1.5" fill="rgba(255,255,255,0.6)" />
         </svg>
       </div>
@@ -107,24 +103,32 @@ export const IconContainer = ({
   delay?: number;
   visible?: boolean;
 }) => {
+  const [showLabel, setShowLabel] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={visible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.4, delay: delay ?? 0 }}
-      className="relative z-50 flex flex-col items-center justify-center space-y-2"
+      className="relative z-50 flex flex-col items-center justify-center"
+      onMouseEnter={() => setShowLabel(true)}
+      onMouseLeave={() => setShowLabel(false)}
+      onClick={() => setShowLabel(v => !v)}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-inner">
+      <div className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-inner backdrop-blur-sm">
         {icon || (
           <svg className="h-8 w-8 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
           </svg>
         )}
       </div>
-      <div className="hidden rounded-md px-2 py-1 md:block">
-        <div className="text-center text-xs font-bold text-slate-400">
-          {text || "Web Development"}
-        </div>
+      {/* Tooltip label */}
+      <div
+        className={`pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded border border-white/10 bg-slate-900/90 px-2 py-1 text-xs font-medium text-slate-200 backdrop-blur-sm transition-all duration-150 ${
+          showLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+        }`}
+      >
+        {text}
       </div>
     </motion.div>
   );

@@ -9,23 +9,14 @@ export function RadarSection() {
 
   return (
     <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="text-slate-500 text-xs mb-12 text-center uppercase tracking-widest"
-      >
-        Scanning the web
-      </motion.p>
-
       <div className="relative flex items-center justify-center z-10 mb-14">
-        {/* Radar — appears first */}
+        {/* Radar */}
         <motion.div
           initial={{ opacity: 0, scale: 0.85 }}
           animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.85 }}
           transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
         >
-          <Radar className="h-72 w-72 md:h-96 md:w-96" />
+          <Radar className="h-[60vw] w-[60vw] sm:h-72 sm:w-72 md:h-96 md:w-96" />
         </motion.div>
 
         {/* Top */}
@@ -43,7 +34,7 @@ export function RadarSection() {
         </div>
 
         {/* Right */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3/4 md:translate-x-full">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 md:translate-x-full">
           <IconContainer visible={isInView} delay={1.2} text="Greenhouse"
             icon={<svg className="h-6 w-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>}
           />
@@ -71,7 +62,7 @@ export function RadarSection() {
         </div>
 
         {/* Left */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3/4 md:-translate-x-full">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 md:-translate-x-full">
           <IconContainer visible={isInView} delay={1.8} text="Wellfound"
             icon={<svg className="h-6 w-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}
           />
@@ -80,7 +71,7 @@ export function RadarSection() {
         {/* Top-left */}
         <div className="absolute top-4 left-0 -translate-x-1/2 md:-translate-x-full">
           <IconContainer visible={isInView} delay={1.95} text="Rippling"
-            icon={<svg className="h-6 w-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+            icon={<svg className="h-6 w-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
           />
         </div>
       </div>
