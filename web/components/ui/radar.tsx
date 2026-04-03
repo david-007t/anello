@@ -20,20 +20,29 @@ export const Circle = ({ className, children, idx, ...rest }: any) => {
 
 export const Radar = ({ className }: { className?: string }) => {
   const circles = new Array(8).fill(1);
-  const [time, setTime] = useState("");
+  const [clock, setClock] = useState({ h: 0, m: 0, s: 0 });
 
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2, "0");
-      const m = String(now.getMinutes()).padStart(2, "0");
-      const s = String(now.getSeconds()).padStart(2, "0");
-      setTime(`${h}:${m}:${s}`);
+      setClock({ h: now.getHours(), m: now.getMinutes(), s: now.getSeconds() });
     };
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, []);
+
+  const cx = 20, cy = 20;
+  const hand = (deg: number, len: number) => {
+    const r = (deg * Math.PI) / 180;
+    return { x2: cx + len * Math.sin(r), y2: cy - len * Math.cos(r) };
+  };
+  const secDeg = (clock.s / 60) * 360;
+  const minDeg = (clock.m / 60) * 360 + (clock.s / 60) * 6;
+  const hrDeg  = ((clock.h % 12) / 12) * 360 + (clock.m / 60) * 30;
+  const sec = hand(secDeg, 16);
+  const min = hand(minDeg, 13);
+  const hr  = hand(hrDeg, 9);
 
   return (
     <div
@@ -58,11 +67,18 @@ export const Radar = ({ className }: { className?: string }) => {
       >
         <div className="relative z-40 h-[1px] w-full bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
       </div>
-      {/* Military time display */}
+      {/* Analog clock hands */}
       <div className="absolute z-50 flex items-center justify-center">
-        <span style={{ fontFamily: "var(--font-drip)" }} className="text-sm tracking-widest text-sky-400/70">
-          {time}
-        </span>
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          {/* hour */}
+          <line x1={cx} y1={cy} x2={hr.x2} y2={hr.y2} stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" />
+          {/* minute */}
+          <line x1={cx} y1={cy} x2={min.x2} y2={min.y2} stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" />
+          {/* second */}
+          <line x1={cx} y1={cy} x2={sec.x2} y2={sec.y2} stroke="rgba(255,255,255,0.35)" strokeWidth="0.75" strokeLinecap="round" />
+          {/* center dot */}
+          <circle cx={cx} cy={cy} r="1.5" fill="rgba(255,255,255,0.6)" />
+        </svg>
       </div>
       {/* Concentric circles */}
       {circles.map((_, idx) => (

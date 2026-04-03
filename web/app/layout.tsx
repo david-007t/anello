@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Rubik_Wet_Paint } from "next/font/google";
+import { Geist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const geist = Geist({
   variable: "--font-geist",
-  subsets: ["latin"],
-});
-
-const rubikWetPaint = Rubik_Wet_Paint({
-  variable: "--font-drip",
-  weight: "400",
   subsets: ["latin"],
 });
 
@@ -41,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider afterSignOutUrl="/">
-      <html lang="en" className={`${geist.variable} ${rubikWetPaint.variable} scroll-smooth`}>
+      <html lang="en" className={`${geist.variable} scroll-smooth`}>
         <body className="min-h-full antialiased">
           {children}
         </body>
