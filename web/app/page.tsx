@@ -115,12 +115,12 @@ const plans = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen text-slate-900">
+    <div className="min-h-screen bg-black text-white">
       <DottedSurface />
       {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-black tracking-tight text-slate-900">
+          <span className="text-xl font-black tracking-tight text-white">
             anelo
           </span>
           <a
@@ -134,17 +134,17 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-medium mb-8">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
           Now accepting early access
         </div>
 
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-6">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] mb-6">
           Your jobs{" "}
-          <span className="text-brand-600">come to you.</span>
+          <span className="text-brand-400">come to you.</span>
         </h1>
 
-        <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
           Anelo is an AI job agent that finds relevant openings, tailors your
           resume for each one, and submits applications — automatically, every
           day.
@@ -156,13 +156,13 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-slate-50 border-y border-slate-100 py-20">
+      <section className="bg-white/5 border-y border-white/10 py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
               How it works
             </h2>
-            <p className="text-slate-500 text-base max-w-xl mx-auto">
+            <p className="text-slate-400 text-base max-w-xl mx-auto">
               Three steps. Then sit back.
             </p>
           </div>
@@ -170,13 +170,13 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-10">
             {steps.map((s) => (
               <div key={s.step}>
-                <span className="text-7xl font-black text-slate-100 select-none leading-none block mb-4">
+                <span className="text-7xl font-black text-white/10 select-none leading-none block mb-4">
                   {s.step}
                 </span>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   {s.title}
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
+                <p className="text-slate-400 text-sm leading-relaxed">
                   {s.description}
                 </p>
               </div>
@@ -189,10 +189,10 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
               Everything you need to land a job
             </h2>
-            <p className="text-slate-500 text-base max-w-xl mx-auto">
+            <p className="text-slate-400 text-base max-w-xl mx-auto">
               Anelo handles the entire funnel so you can focus on interviews.
             </p>
           </div>
@@ -201,13 +201,13 @@ export default function HomePage() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="p-6 rounded-2xl border border-slate-100 bg-white hover:border-brand-100 hover:shadow-sm transition"
+                className="p-6 rounded-2xl border border-white/10 bg-white/5 hover:border-white/20 transition"
               >
-                <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center mb-4">
                   {f.icon}
                 </div>
-                <h3 className="font-semibold text-slate-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="font-semibold text-white mb-2">{f.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">
                   {f.description}
                 </p>
               </div>
@@ -217,13 +217,13 @@ export default function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section className="bg-slate-50 border-y border-slate-100 py-20">
+      <section className="bg-white/5 border-y border-white/10 py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
               Simple pricing
             </h2>
-            <p className="text-slate-500 text-base max-w-xl mx-auto">
+            <p className="text-slate-400 text-base max-w-xl mx-auto">
               Start free. Upgrade when you&apos;re ready.
             </p>
           </div>
@@ -235,13 +235,13 @@ export default function HomePage() {
                 className={`rounded-2xl p-7 border flex flex-col ${
                   p.highlight
                     ? "bg-brand-600 border-brand-600 text-white shadow-xl"
-                    : "bg-white border-slate-100"
+                    : "bg-white/5 border-white/10"
                 }`}
               >
                 <div className="mb-6">
                   <p
                     className={`text-sm font-semibold mb-1 ${
-                      p.highlight ? "text-brand-100" : "text-brand-600"
+                      p.highlight ? "text-brand-100" : "text-brand-400"
                     }`}
                   >
                     {p.name}
@@ -249,7 +249,7 @@ export default function HomePage() {
                   <div className="flex items-baseline gap-1 mb-2">
                     <span
                       className={`text-4xl font-black ${
-                        p.highlight ? "text-white" : "text-slate-900"
+                        p.highlight ? "text-white" : "text-white"
                       }`}
                     >
                       {p.price}
@@ -266,7 +266,7 @@ export default function HomePage() {
                   </div>
                   <p
                     className={`text-sm ${
-                      p.highlight ? "text-brand-100" : "text-slate-500"
+                      p.highlight ? "text-brand-100" : "text-slate-400"
                     }`}
                   >
                     {p.description}
@@ -278,7 +278,7 @@ export default function HomePage() {
                     <li key={feat} className="flex items-center gap-2.5 text-sm">
                       <svg
                         className={`w-4 h-4 shrink-0 ${
-                          p.highlight ? "text-brand-200" : "text-brand-500"
+                          p.highlight ? "text-brand-200" : "text-brand-400"
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -292,7 +292,7 @@ export default function HomePage() {
                         />
                       </svg>
                       <span
-                        className={p.highlight ? "text-white" : "text-slate-700"}
+                        className={p.highlight ? "text-white" : "text-slate-300"}
                       >
                         {feat}
                       </span>
@@ -319,10 +319,10 @@ export default function HomePage() {
       {/* Bottom CTA */}
       <section className="py-20">
         <div className="max-w-2xl mx-auto px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Stop applying. Start getting offers.
           </h2>
-          <p className="text-slate-500 mb-10 text-base leading-relaxed">
+          <p className="text-slate-400 mb-10 text-base leading-relaxed">
             Join the waitlist and be first to access Anelo when we launch.
           </p>
           <div className="flex justify-center">
@@ -332,15 +332,15 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-8">
+      <footer className="border-t border-white/10 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm font-black text-slate-900">anelo</span>
-          <p className="text-xs text-slate-400">
+          <span className="text-sm font-black text-white">anelo</span>
+          <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} Anelo. All rights reserved.
           </p>
           <a
             href="mailto:hello@anelo.io"
-            className="text-xs text-slate-400 hover:text-slate-600 transition"
+            className="text-xs text-slate-500 hover:text-slate-300 transition"
           >
             Contact
           </a>
