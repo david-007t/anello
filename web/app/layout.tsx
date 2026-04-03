@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { CornerMascot } from "@/components/ui/corner-mascot";
 import "./globals.css";
 
 const geist = Geist({
@@ -39,7 +38,6 @@ export default function RootLayout({
       <html lang="en" className={`${geist.variable} scroll-smooth`}>
         <body className="min-h-full antialiased">
           {children}
-          <CornerMascot />
         </body>
       </html>
     </ClerkProvider>

@@ -3,8 +3,6 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Radar, IconContainer } from '@/components/ui/radar';
-import WaitlistForm from './WaitlistForm';
-
 export function RadarSection() {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.4 });
@@ -87,9 +85,6 @@ export function RadarSection() {
         </div>
       </div>
 
-      <div className="flex justify-center z-10" id="waitlist">
-        <WaitlistForm />
-      </div>
     </section>
   );
 }
