@@ -115,8 +115,9 @@ const plans = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-white">
       <DottedSurface />
+      <div className="relative z-10">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -346,6 +347,7 @@ export default function HomePage() {
           </a>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
