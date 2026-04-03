@@ -85,7 +85,7 @@ export default function WaitlistForm() {
               background: 'radial-gradient(circle, #9ca3af 10%, transparent 70%)',
             }}
           />
-          <span className="relative z-10">{status === "loading" ? "One sec…" : "Try Anello"}</span>
+          <span className="relative z-10">{status === "loading" ? "One sec…" : "Try Anelo"}</span>
         </button>
       </form>
       {status === "error" && (

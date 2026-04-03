@@ -14,7 +14,7 @@ export default function ContinueWithGoogle() {
 
   async function handleClick() {
     if (isSignedIn) {
-      router.push('/dashboard');
+      router.push('/already-signed-in');
       return;
     }
     if (!signUp || !signIn) return;
@@ -30,8 +30,16 @@ export default function ContinueWithGoogle() {
 
     if (!signUpError) return; // redirect in progress
 
+    // Check for session_exists at top-level or nested in errors array
+    const code = (signUpError as any)?.code;
+    const innerCode = (signUpError as any)?.errors?.[0]?.code;
+
+    if (code === 'session_exists' || innerCode === 'session_exists') {
+      router.push('/already-signed-in');
+      return;
+    }
+
     // Account already exists — try sign-in
-    const code = signUpError?.code;
     if (code === 'form_identifier_exists' || code === 'oauth_account_exists') {
       const { error: signInError } = await signIn.sso({
         strategy: 'oauth_google',
@@ -39,6 +47,12 @@ export default function ContinueWithGoogle() {
         redirectCallbackUrl: `${origin}/dashboard`,
       });
       if (signInError) {
+        const signInCode = (signInError as any)?.code;
+        const signInInnerCode = (signInError as any)?.errors?.[0]?.code;
+        if (signInCode === 'session_exists' || signInInnerCode === 'session_exists') {
+          router.push('/already-signed-in');
+          return;
+        }
         setLoading(false);
         setError('Something went wrong. Try again.');
       }
