@@ -74,7 +74,7 @@ export function FallingPattern({
         '300px 215px','300px 215px','300px 215px',
         '300px 281px','300px 281px','300px 281px',
         '300px 158px','300px 158px','300px 158px',
-        '300px 210px','300px 210px',
+        '300px 210px','300px 210px','300px 210px',
     ].join(', ');
 
     const startPositions = '0px 220px, 3px 220px, 151.5px 337.5px, 25px 24px, 28px 24px, 176.5px 150px, 50px 16px, 53px 16px, 201.5px 91px, 75px 224px, 78px 224px, 226.5px 230.5px, 100px 19px, 103px 19px, 251.5px 121px, 125px 120px, 128px 120px, 276.5px 187px, 150px 31px, 153px 31px, 301.5px 120.5px, 175px 235px, 178px 235px, 326.5px 384.5px, 200px 121px, 203px 121px, 351.5px 228.5px, 225px 224px, 228px 224px, 376.5px 364.5px, 250px 26px, 253px 26px, 401.5px 105px, 275px 75px, 278px 75px, 426.5px 180px';

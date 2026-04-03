@@ -121,8 +121,8 @@ export default function HomePage() {
         color="rgba(255,255,255,0.18)"
         backgroundColor="#000000"
         duration={120}
-        blurIntensity="0.5px"
-        density={0.6}
+        blurIntensity="1em"
+        density={1}
         className="fixed inset-0 z-0"
       />
       <div className="relative z-10">
