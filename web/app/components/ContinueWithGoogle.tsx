@@ -1,16 +1,22 @@
 'use client';
 
-import { useSignUp, useSignIn } from '@clerk/nextjs';
+import { useSignUp, useSignIn, useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ContinueWithGoogle() {
+  const { isSignedIn } = useAuth();
   const { signUp } = useSignUp();
   const { signIn } = useSignIn();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [debugError, setDebugError] = useState<string>('');
 
   async function handleClick() {
+    if (isSignedIn) {
+      router.push('/dashboard');
+      return;
+    }
     if (!signUp || !signIn) return;
     setLoading(true);
     setError('');
@@ -38,7 +44,6 @@ export default function ContinueWithGoogle() {
       }
     } else {
       setLoading(false);
-      setDebugError(JSON.stringify(signUpError, null, 2));
       setError('Something went wrong. Try again.');
     }
   }
@@ -68,7 +73,6 @@ export default function ContinueWithGoogle() {
         <span>{loading ? 'Redirecting\u2026' : 'Continue with Google'}</span>
       </button>
       {error && <p className="text-xs text-red-400">{error}</p>}
-      {debugError && <pre className="text-xs text-yellow-400 text-left max-w-sm whitespace-pre-wrap">{debugError}</pre>}
       <p className="text-xs text-white/30">Free to try · No credit card required</p>
     </div>
   );
