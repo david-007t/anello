@@ -118,10 +118,11 @@ export default function HomePage() {
   return (
     <div className="min-h-screen text-white">
       <FallingPattern
-        color="rgba(255,255,255,0.6)"
+        color="rgba(255,255,255,0.18)"
         backgroundColor="#000000"
-        duration={150}
-        blurIntensity="1px"
+        duration={120}
+        blurIntensity="0.5px"
+        density={0.6}
         className="fixed inset-0 z-0"
       />
       <div className="relative z-10">
@@ -140,22 +141,25 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-        {/* Headline */}
-        <div className="text-center mb-12 z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            Now accepting early access
-          </div>
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] mb-6">
-            Your jobs{" "}
-            <span className="text-brand-400">come to you.</span>
-          </h1>
-          <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Anelo scans the web, tailors your resume, and auto-applies — every day, on autopilot.
-          </p>
+      {/* Hero — above fold, text only */}
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Now accepting early access
         </div>
+        <h1 className="text-5xl sm:text-6xl lg:text-8xl font-extrabold tracking-tight text-white leading-[1.05] mb-6">
+          Let jobs<br />find you.
+        </h1>
+        <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed">
+          Anelo scans the web, tailors your resume, and auto-applies — every day, on autopilot.
+        </p>
+      </section>
+
+      {/* Radar section — visible on scroll */}
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
+        <p className="text-slate-500 text-xs mb-12 text-center uppercase tracking-widest">
+          Scanning the web
+        </p>
 
         {/* Radar + orbiting job icons */}
         <div className="relative flex items-center justify-center z-10 mb-14">
@@ -259,7 +263,7 @@ export default function HomePage() {
               text="Rippling"
               icon={
                 <svg className="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               }
             />
