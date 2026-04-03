@@ -60,7 +60,7 @@ export const Radar = ({ className }: { className?: string }) => {
       </div>
       {/* Military time display */}
       <div className="absolute z-50 flex items-center justify-center">
-        <span className="font-mono text-xs font-semibold tracking-widest text-sky-400/70">
+        <span style={{ fontFamily: "var(--font-drip)" }} className="text-sm tracking-widest text-sky-400/70">
           {time}
         </span>
       </div>
