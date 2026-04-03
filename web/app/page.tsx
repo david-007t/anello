@@ -27,8 +27,13 @@ const steps = [
 ];
 
 export default function HomePage() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: scrollRef });
+  const spacerRef = useRef<HTMLDivElement>(null);
+
+  // Track how far through the 300vh spacer the user has scrolled (window scroll)
+  const { scrollYProgress } = useScroll({
+    target: spacerRef,
+    offset: ['start start', 'end end'],
+  });
 
   // Section 1 (Radar): visible 0 → 0.4
   const radarOpacity = useTransform(scrollYProgress, [0, 0.25, 0.4], [1, 1, 0]);
@@ -41,13 +46,11 @@ export default function HomePage() {
   const hintOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
   function scrollToBottom() {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="text-white" style={{ background: '#000' }}>
       <FallingPattern
         color="rgba(255,255,255,0.3)"
         backgroundColor="#000000"
@@ -74,88 +77,81 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Scroll container — this is what actually scrolls */}
-      <div
-        ref={scrollRef}
-        className="h-screen overflow-y-scroll relative z-10"
-        style={{ scrollbarWidth: 'none' }}
-      >
-        {/* Tall spacer to give scroll room */}
-        <div style={{ height: '300vh' }} className="relative">
-          {/* Sticky frame — stays fixed in viewport while spacer scrolls past */}
-          <div className="sticky top-0 h-screen overflow-hidden">
+      {/* 300vh spacer — window scrolls through this, driving all animations */}
+      <div ref={spacerRef} style={{ height: '300vh' }} className="relative z-10">
+        {/* Sticky frame — stays fixed in viewport while page scrolls */}
+        <div className="sticky top-0 h-screen overflow-hidden">
 
-            {/* Section 1: Radar */}
+          {/* Section 1: Radar */}
+          <motion.div
+            style={{ opacity: radarOpacity }}
+            className="absolute inset-0 flex items-center justify-center pt-16"
+          >
+            <RadarSection />
+            {/* Scroll hint */}
             <motion.div
-              style={{ opacity: radarOpacity }}
-              className="absolute inset-0 flex items-center justify-center pt-16"
+              style={{ opacity: hintOpacity }}
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
             >
-              <RadarSection />
-              {/* Scroll hint */}
-              <motion.div
-                style={{ opacity: hintOpacity }}
-                className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+              <span className="text-xs text-white/30 tracking-widest uppercase">scroll</span>
+              <motion.svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                animate={{ y: [0, 4, 0] }}
+                transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
               >
-                <span className="text-xs text-white/30 tracking-widest uppercase">scroll</span>
-                <motion.svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  animate={{ y: [0, 4, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
-                >
-                  <path d="M8 3v10M4 9l4 4 4-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </motion.svg>
-              </motion.div>
+                <path d="M8 3v10M4 9l4 4 4-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </motion.svg>
             </motion.div>
+          </motion.div>
 
-            {/* Section 2: Hero */}
-            <motion.div
-              style={{ opacity: heroOpacity }}
-              className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pt-16"
-            >
-              <GooeyText
-                texts={["Let jobs find you.", "Every single day.", "On autopilot."]}
-                morphTime={1.2}
-                cooldownTime={1.8}
-                className="h-28 w-full"
-                textClassName="font-extrabold tracking-tight text-white"
-              />
-              <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mt-8 mb-10">
-                Anelo scans the web, identifies the freshest job postings, and tailors your resume — every day, automatically.
-              </p>
-              <ContinueWithGoogle />
-            </motion.div>
+          {/* Section 2: Hero */}
+          <motion.div
+            style={{ opacity: heroOpacity }}
+            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pt-16"
+          >
+            <GooeyText
+              texts={["Let jobs find you.", "Every single day.", "On autopilot."]}
+              morphTime={1.2}
+              cooldownTime={1.8}
+              className="h-28 w-full"
+              textClassName="font-extrabold tracking-tight text-white"
+            />
+            <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mt-8 mb-10">
+              Anelo scans the web, identifies the freshest job postings, and tailors your resume — every day, automatically.
+            </p>
+            <ContinueWithGoogle />
+          </motion.div>
 
-            {/* Section 3: How It Works */}
-            <motion.div
-              style={{ opacity: howOpacity }}
-              className="absolute inset-0 flex items-center justify-center pt-16"
-            >
-              <div className="max-w-6xl mx-auto px-6 w-full">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">How it works</h2>
-                  <p className="text-slate-400 text-base max-w-xl mx-auto">Three steps. Then sit back.</p>
-                </div>
-                <div className="grid md:grid-cols-3 gap-10">
-                  {steps.map((s) => (
-                    <div key={s.step}>
-                      <span className="text-7xl font-black text-white/10 select-none leading-none block mb-4">{s.step}</span>
-                      <h3 className="text-lg font-semibold text-white mb-2">{s.title}</h3>
-                      <p className="text-slate-400 text-sm leading-relaxed">{s.description}</p>
-                    </div>
-                  ))}
-                </div>
+          {/* Section 3: How It Works */}
+          <motion.div
+            style={{ opacity: howOpacity }}
+            className="absolute inset-0 flex items-center justify-center pt-16"
+          >
+            <div className="max-w-6xl mx-auto px-6 w-full">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">How it works</h2>
+                <p className="text-slate-400 text-base max-w-xl mx-auto">Three steps. Then sit back.</p>
               </div>
-            </motion.div>
+              <div className="grid md:grid-cols-3 gap-10">
+                {steps.map((s) => (
+                  <div key={s.step}>
+                    <span className="text-7xl font-black text-white/10 select-none leading-none block mb-4">{s.step}</span>
+                    <h3 className="text-lg font-semibold text-white mb-2">{s.title}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{s.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
 
-          </div>
         </div>
       </div>
 
-      {/* Footer — fixed at bottom */}
-      <footer className="fixed bottom-0 left-0 right-0 z-10 border-t border-white/10 py-4 bg-black/60 backdrop-blur-md">
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/10 py-4 bg-black/60 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           <span className="text-sm font-black text-white">anelo</span>
           <p className="text-xs text-slate-500">© {new Date().getFullYear()} Anelo. All rights reserved.</p>
