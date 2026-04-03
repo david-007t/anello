@@ -115,7 +115,7 @@ const plans = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen text-slate-900">
       <DottedSurface />
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
