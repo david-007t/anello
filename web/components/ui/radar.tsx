@@ -18,7 +18,7 @@ export const Circle = ({ className, children, idx, ...rest }: any) => {
   );
 };
 
-export const Radar = ({ className, sweepAngle = 20 }: { className?: string; sweepAngle?: number }) => {
+export const Radar = ({ className }: { className?: string }) => {
   const circles = new Array(8).fill(1);
   const [clock, setClock] = useState({ h: 0, m: 0, s: 0 });
 
@@ -51,10 +51,19 @@ export const Radar = ({ className, sweepAngle = 20 }: { className?: string; swee
         className
       )}
     >
-      {/* Rotating sweep line — driven by JS for exact sync with label reveals */}
+      <style>{`
+        @keyframes radar-spin {
+          from { transform: rotate(20deg); }
+          to   { transform: rotate(380deg); }
+        }
+        .animate-radar-spin {
+          animation: radar-spin 10s linear infinite;
+        }
+      `}</style>
+      {/* Rotating sweep line */}
       <div
-        style={{ transformOrigin: "right center", transform: `rotate(${sweepAngle}deg)` }}
-        className="absolute right-1/2 top-1/2 z-40 flex h-[5px] w-[400px] items-end justify-center overflow-hidden bg-transparent"
+        style={{ transformOrigin: "right center" }}
+        className="animate-radar-spin absolute right-1/2 top-1/2 z-40 flex h-[5px] w-[400px] items-end justify-center overflow-hidden bg-transparent"
       >
         <div className="relative z-40 h-[1px] w-full bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
       </div>
@@ -88,16 +97,13 @@ export const IconContainer = ({
   text,
   delay,
   visible = true,
-  lit = false,
 }: {
   icon?: React.ReactNode;
   text?: string;
   delay?: number;
   visible?: boolean;
-  lit?: boolean;
 }) => {
   const [showLabel, setShowLabel] = useState(false);
-  const labelVisible = lit || showLabel;
 
   return (
     <motion.div
@@ -119,7 +125,7 @@ export const IconContainer = ({
       {/* Tooltip label */}
       <div
         className={`pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-xs font-medium text-white/60 transition-all duration-150 ${
-          labelVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+          showLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
         }`}
       >
         {text}
