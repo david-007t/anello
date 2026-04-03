@@ -33,8 +33,10 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll();
 
   // Sequential fades — each section fully gone before the next appears
-  // Radar: visible → fades out 0.25–0.35
-  const radarOpacity = useTransform(scrollYProgress, [0, 0.25, 0.35], [1, 1, 0]);
+  // Radar: visible → fades out 0.25–0.35, then stays at 0 for the rest of the scroll
+  const radarOpacity = useTransform(scrollYProgress, [0, 0.25, 0.35, 1.0], [1, 1, 0, 0]);
+  // Belt-and-suspenders: also hide via visibility once opacity hits 0
+  const radarVisibility = useTransform(radarOpacity, (v) => (v <= 0 ? 'hidden' : 'visible'));
   // Hero: fades in 0.35–0.44, holds, fades out 0.60–0.68
   const heroOpacity = useTransform(scrollYProgress, [0.35, 0.44, 0.60, 0.68], [0, 1, 1, 0]);
   // How It Works: fades in 0.68–0.77, holds to end
@@ -84,7 +86,7 @@ export default function HomePage() {
 
           {/* Section 1: Radar */}
           <motion.div
-            style={{ opacity: radarOpacity, pointerEvents: 'none' }}
+            style={{ opacity: radarOpacity, visibility: radarVisibility, pointerEvents: 'none' }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <RadarSection />
