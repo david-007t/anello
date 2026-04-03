@@ -49,9 +49,7 @@ export default function RunDigestButton() {
           if (!hasSeenRunning.current) return;
           stopPolling();
           setTimeout(() => {
-            router.refresh();
-            setStatus("idle");
-            setStep("");
+            window.location.href = "/dashboard/digest";
           }, 2000);
         } else if (data.status === "error" || data.status === "idle") {
           stopPolling();
