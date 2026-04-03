@@ -8,6 +8,7 @@ export default function ContinueWithGoogle() {
   const { signIn } = useSignIn();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [debugError, setDebugError] = useState<string>('');
 
   async function handleClick() {
     if (!signUp || !signIn) return;
@@ -37,6 +38,7 @@ export default function ContinueWithGoogle() {
       }
     } else {
       setLoading(false);
+      setDebugError(JSON.stringify(signUpError, null, 2));
       setError('Something went wrong. Try again.');
     }
   }
@@ -66,6 +68,7 @@ export default function ContinueWithGoogle() {
         <span>{loading ? 'Redirecting\u2026' : 'Continue with Google'}</span>
       </button>
       {error && <p className="text-xs text-red-400">{error}</p>}
+      {debugError && <pre className="text-xs text-yellow-400 text-left max-w-sm whitespace-pre-wrap">{debugError}</pre>}
       <p className="text-xs text-white/30">Free to try · No credit card required</p>
     </div>
   );
