@@ -6,6 +6,7 @@ import WaitlistForm from "./components/WaitlistForm";
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { RadarSection } from './components/RadarSection';
 import { HoverButton } from '@/components/ui/hover-button';
+import { GooeyText } from '@/components/ui/gooey-text';
 
 const steps = [
   {
@@ -25,28 +26,6 @@ const steps = [
   },
 ];
 
-const heroWords = ["Let", "jobs", "find", "you."];
-
-function WordReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
-
-  return (
-    <div ref={ref} className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-      {heroWords.map((word, i) => (
-        <motion.span
-          key={word}
-          className="text-5xl sm:text-6xl lg:text-8xl font-extrabold tracking-tight text-white leading-[1.05]"
-          initial={{ opacity: 0, y: 40 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-          transition={{ duration: 0.5, delay: i * 0.15, ease: 'easeOut' }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </div>
-  );
-}
 
 function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -104,7 +83,13 @@ export default function HomePage() {
             </div>
           </FadeInSection>
 
-          <WordReveal />
+          <GooeyText
+            texts={["Let", "jobs", "find", "you."]}
+            morphTime={1}
+            cooldownTime={0.5}
+            className="h-24 w-full"
+            textClassName="font-extrabold tracking-tight text-white"
+          />
 
           <FadeInSection delay={0.7}>
             <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mt-8 mb-10">
