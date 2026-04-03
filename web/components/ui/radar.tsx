@@ -18,7 +18,7 @@ export const Circle = ({ className, children, idx, ...rest }: any) => {
   );
 };
 
-export const Radar = ({ className }: { className?: string }) => {
+export const Radar = ({ className, sweepAngle = 20 }: { className?: string; sweepAngle?: number }) => {
   const circles = new Array(8).fill(1);
   const [clock, setClock] = useState({ h: 0, m: 0, s: 0 });
 
@@ -51,19 +51,10 @@ export const Radar = ({ className }: { className?: string }) => {
         className
       )}
     >
-      <style>{`
-        @keyframes radar-spin {
-          from { transform: rotate(20deg); }
-          to   { transform: rotate(380deg); }
-        }
-        .animate-radar-spin {
-          animation: radar-spin 10s linear infinite;
-        }
-      `}</style>
-      {/* Rotating sweep line */}
+      {/* Rotating sweep line — driven by JS for exact sync with label reveals */}
       <div
-        style={{ transformOrigin: "right center" }}
-        className="animate-radar-spin absolute right-1/2 top-1/2 z-40 flex h-[5px] w-[400px] items-end justify-center overflow-hidden bg-transparent"
+        style={{ transformOrigin: "right center", transform: `rotate(${sweepAngle}deg)` }}
+        className="absolute right-1/2 top-1/2 z-40 flex h-[5px] w-[400px] items-end justify-center overflow-hidden bg-transparent"
       >
         <div className="relative z-40 h-[1px] w-full bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
       </div>

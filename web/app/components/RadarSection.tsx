@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { motion, useInView, useAnimationFrame } from 'framer-motion';
 import { Radar, IconContainer } from '@/components/ui/radar';
 
 // Angles (degrees, clockwise from top=0°) matching icon positions around the radar
@@ -16,29 +16,7 @@ const ICON_ANGLES: Record<string, number> = {
   Rippling:   315,
 };
 
-// Radar CSS animation: rotate(20deg) → rotate(380deg) in 10s linear
-const RADAR_DURATION_MS = 10000;
-const RADAR_START_DEG   = 20;
-
-function useSweepAngle() {
-  const [angle, setAngle] = useState(RADAR_START_DEG);
-  const startRef = useRef<number | null>(null);
-  const rafRef   = useRef<number>(0);
-
-  useEffect(() => {
-    startRef.current = performance.now();
-    const tick = (now: number) => {
-      const elapsed = now - (startRef.current ?? now);
-      const deg = RADAR_START_DEG + (elapsed % RADAR_DURATION_MS) / RADAR_DURATION_MS * 360;
-      setAngle(deg % 360);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  return angle;
-}
+const DURATION_MS = 10000;
 
 // Icon is lit when the sweep just passed it (trailing window of 18°)
 function isLit(sweepAngle: number, iconAngle: number) {
@@ -49,7 +27,13 @@ function isLit(sweepAngle: number, iconAngle: number) {
 export function RadarSection() {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: false, amount: 0.4 });
-  const sweepAngle = useSweepAngle();
+  const [sweepAngle, setSweepAngle] = useState(20);
+
+  // useAnimationFrame gives the exact same `time` that drives both the visual
+  // rotation and the isLit checks — guaranteed zero drift
+  useAnimationFrame((time) => {
+    setSweepAngle((20 + (time % DURATION_MS) / DURATION_MS * 360) % 360);
+  });
 
   return (
     <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
@@ -60,7 +44,7 @@ export function RadarSection() {
           animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.85 }}
           transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
         >
-          <Radar className="h-[60vw] w-[60vw] sm:h-72 sm:w-72 md:h-96 md:w-96" />
+          <Radar className="h-[60vw] w-[60vw] sm:h-72 sm:w-72 md:h-96 md:w-96" sweepAngle={sweepAngle} />
         </motion.div>
 
         {/* Top */}
