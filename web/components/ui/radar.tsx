@@ -124,7 +124,7 @@ export const IconContainer = ({
       </div>
       {/* Tooltip label */}
       <div
-        className={`pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-xs font-bold text-slate-400 transition-all duration-150 ${
+        className={`pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-xs font-medium text-white/60 transition-all duration-150 ${
           showLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
         }`}
       >
