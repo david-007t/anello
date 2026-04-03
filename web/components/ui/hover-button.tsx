@@ -17,10 +17,10 @@ const HoverButton: React.FC<ButtonProps> = ({
   onClick,
   className = '',
   disabled = false,
-  glowColor = '#9ca3af',
-  backgroundColor = 'rgba(255,255,255,0.05)',
-  textColor = '#e5e7eb',
-  hoverTextColor = '#ffffff',
+  glowColor = '#00ffc3',
+  backgroundColor = '#111827',
+  textColor = '#ffffff',
+  hoverTextColor = '#67e8f9'
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [glowPosition, setGlowPosition] = useState({ x: 50, y: 50 });
@@ -44,9 +44,9 @@ const HoverButton: React.FC<ButtonProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
-        relative inline-block px-8 py-3 border border-white/10
+        relative inline-block px-8 py-4 border-none
         cursor-pointer overflow-hidden transition-colors duration-300
-        text-base rounded-full z-10 font-sans backdrop-blur-sm
+        text-xl rounded-lg z-10 font-sans
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${className}
       `}
@@ -57,9 +57,9 @@ const HoverButton: React.FC<ButtonProps> = ({
     >
       <div
         className={`
-          absolute w-[180px] h-[180px] rounded-full pointer-events-none
-          transition-transform duration-300 ease-out -translate-x-1/2 -translate-y-1/2
-          ${isHovered ? 'opacity-30 scale-100' : 'opacity-0 scale-0'}
+          absolute w-[200px] h-[200px] rounded-full opacity-50 pointer-events-none
+          transition-transform duration-400 ease-out -translate-x-1/2 -translate-y-1/2
+          ${isHovered ? 'scale-120' : 'scale-0'}
         `}
         style={{
           left: `${glowPosition.x}px`,
