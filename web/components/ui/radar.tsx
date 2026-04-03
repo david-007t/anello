@@ -97,13 +97,16 @@ export const IconContainer = ({
   text,
   delay,
   visible = true,
+  lit = false,
 }: {
   icon?: React.ReactNode;
   text?: string;
   delay?: number;
   visible?: boolean;
+  lit?: boolean;
 }) => {
   const [showLabel, setShowLabel] = useState(false);
+  const labelVisible = lit || showLabel;
 
   return (
     <motion.div
@@ -125,7 +128,7 @@ export const IconContainer = ({
       {/* Tooltip label */}
       <div
         className={`pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-xs font-medium text-white/60 transition-all duration-150 ${
-          showLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+          labelVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
         }`}
       >
         {text}
