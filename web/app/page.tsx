@@ -1,5 +1,5 @@
 import WaitlistForm from "./components/WaitlistForm";
-import { GradientDots } from '@/components/ui/gradient-dots';
+import { FallingPattern } from '@/components/ui/falling-pattern';
 import { Radar, IconContainer } from "@/components/ui/radar";
 
 const features = [
@@ -117,10 +117,11 @@ const plans = [
 export default function HomePage() {
   return (
     <div className="min-h-screen text-white">
-      <GradientDots
-        duration={20}
-        colorCycleDuration={8}
+      <FallingPattern
+        color="rgba(255,255,255,0.6)"
         backgroundColor="#000000"
+        duration={150}
+        blurIntensity="1px"
         className="fixed inset-0 z-0"
       />
       <div className="relative z-10">
