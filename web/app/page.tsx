@@ -22,7 +22,7 @@ const steps = [
   {
     step: "03",
     title: "Anelo gets to work",
-    description: "Every morning, Anelo scans the web for the freshest postings, identifies the best matches, tailors your resume, and notifies you — ready to apply.",
+    description: "Anelo runs multiple times a day to grab the latest postings, identifies the best matches for your profile, tailors your resume for each one, and notifies you — so you're always first in line.",
   },
 ];
 
@@ -76,23 +76,20 @@ export default function HomePage() {
 
         {/* Hero — reveals on scroll */}
         <section className="flex flex-col items-center justify-center px-6 py-28 text-center">
-          <FadeInSection>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium mb-10">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              Now accepting early access
-            </div>
-          </FadeInSection>
-
           <GooeyText
-            texts={["Let", "jobs", "find", "you."]}
-            morphTime={1}
-            cooldownTime={0.5}
-            className="h-24 w-full"
+            texts={["Let jobs find you.", ""]}
+            morphTime={1.2}
+            cooldownTime={1.5}
+            className="h-28 w-full"
             textClassName="font-extrabold tracking-tight text-white"
           />
 
-          <FadeInSection delay={0.7}>
-            <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mt-8 mb-10">
+          <FadeInSection delay={0.3}>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium mt-6 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              Now accepting early access
+            </div>
+            <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mb-10">
               Anelo scans the web, identifies the freshest job postings, and tailors your resume — every day, automatically.
             </p>
             <div id="waitlist" className="flex justify-center w-full">
