@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
 import { FallingPattern } from '@/components/ui/falling-pattern';
-import { HoverButton } from '@/components/ui/hover-button';
 
 interface FormState {
   role: string;
@@ -229,17 +228,13 @@ export default function UpdatePreferencesPage() {
                   />
                 </div>
 
-                <HoverButton
+                <button
                   type="submit"
                   disabled={loading || status === 'saving'}
-                  backgroundColor="rgba(255,255,255,0.05)"
-                  glowColor="#9ca3af"
-                  textColor="#e5e7eb"
-                  hoverTextColor="#ffffff"
-                  className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full"
+                  className="w-full py-3 px-6 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-slate-200 hover:bg-white/10 hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved ✓' : 'Save preferences'}
-                </HoverButton>
+                </button>
 
                 {status === 'error' && (
                   <p className="text-sm text-red-400 text-center">Something went wrong. Try again.</p>
