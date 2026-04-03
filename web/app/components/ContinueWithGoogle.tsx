@@ -14,10 +14,11 @@ export default function ContinueWithGoogle() {
     setLoading(true);
     setError('');
 
+    const origin = window.location.origin;
     const { error: signUpError } = await signUp.sso({
       strategy: 'oauth_google',
-      redirectUrl: '/sso-callback',
-      redirectCallbackUrl: '/onboarding',
+      redirectUrl: `${origin}/sso-callback`,
+      redirectCallbackUrl: `${origin}/onboarding`,
     });
 
     if (!signUpError) return; // redirect in progress
@@ -27,8 +28,8 @@ export default function ContinueWithGoogle() {
     if (code === 'form_identifier_exists' || code === 'oauth_account_exists') {
       const { error: signInError } = await signIn.sso({
         strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
-        redirectCallbackUrl: '/dashboard',
+        redirectUrl: `${origin}/sso-callback`,
+        redirectCallbackUrl: `${origin}/dashboard`,
       });
       if (signInError) {
         setLoading(false);
