@@ -63,16 +63,18 @@ export const IconContainer = ({
   icon,
   text,
   delay,
+  visible = true,
 }: {
   icon?: React.ReactNode;
   text?: string;
   delay?: number;
+  visible?: boolean;
 }) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2, delay: delay ?? 0 }}
+      animate={visible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4, delay: delay ?? 0 }}
       className="relative z-50 flex flex-col items-center justify-center space-y-2"
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 shadow-inner">
