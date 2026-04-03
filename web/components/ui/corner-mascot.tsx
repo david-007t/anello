@@ -29,7 +29,7 @@ export function CornerMascot() {
         <motion.div
           animate={{ width: hovered ? 220 : 120, height: hovered ? 220 : 120 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative rounded-2xl overflow-hidden bg-black/60 border border-white/10 backdrop-blur-md shadow-2xl"
+          className="relative overflow-hidden"
           style={{ willChange: 'width, height' }}
         >
           <SplineScene
