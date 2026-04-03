@@ -66,7 +66,7 @@ export default function HomePage() {
               hoverTextColor="#ffffff"
               className="!text-sm !py-2 !px-5 !rounded-full border border-white/10"
             >
-              Join Waitlist
+              Try Anello
             </HoverButton>
           </div>
         </nav>

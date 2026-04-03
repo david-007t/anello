@@ -23,8 +23,11 @@ export default function WaitlistForm() {
       const data = await res.json();
       if (res.ok) {
         setStatus("success");
-        setMessage("You're on the list. We'll reach out when we launch.");
+        setMessage("Got it! Setting up your account…");
         setEmail("");
+        setTimeout(() => {
+          window.location.href = "/sign-up";
+        }, 1000);
       } else {
         setStatus("error");
         setMessage(data.error || "Something went wrong. Try again.");
@@ -82,14 +85,14 @@ export default function WaitlistForm() {
               background: 'radial-gradient(circle, #9ca3af 10%, transparent 70%)',
             }}
           />
-          <span className="relative z-10">{status === "loading" ? "Joining…" : "Join Waitlist"}</span>
+          <span className="relative z-10">{status === "loading" ? "One sec…" : "Try Anello"}</span>
         </button>
       </form>
       {status === "error" && (
         <p className="mt-2 text-sm text-red-400">{message}</p>
       )}
       <p className="mt-3 text-xs text-white/30">
-        Free trial · No credit card required · Unsubscribe anytime
+        Free to try · No credit card required · Unsubscribe anytime
       </p>
     </div>
   );

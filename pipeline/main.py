@@ -244,7 +244,31 @@ def run(on_step=None, send_digest_email: bool = True):
         # 6. Send digest email (only on scheduled daily digest, not intraday polls)
         if send_digest_email:
             if user_email:
-                send_digest(user_email, user_name, ranked)
+                # Query all current digest_jobs for this user (pruned to freshness window above)
+                # so we never resend jobs that were already emailed in a previous run
+                try:
+                    digest_res = (
+                        db.table("digest_jobs")
+                        .select("*")
+                        .eq("user_id", user_id)
+                        .order("matched_at", desc=True)
+                        .execute()
+                    )
+                    digest_to_send = [
+                        {
+                            "title": r.get("role", ""),
+                            "company": r.get("company", ""),
+                            "location": r.get("location", ""),
+                            "url": r.get("job_url", "#"),
+                            "salary_range": r.get("salary_range", ""),
+                        }
+                        for r in (digest_res.data or [])
+                    ]
+                except Exception as e:
+                    logger.warning(f"Could not query digest_jobs for email: {e} — falling back to ranked")
+                    digest_to_send = ranked
+
+                send_digest(user_email, user_name, digest_to_send)
             else:
                 logger.info(f"No email for user {user_id} — skipping digest send")
 

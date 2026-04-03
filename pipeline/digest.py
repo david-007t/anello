@@ -26,6 +26,8 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
             salary = f" · ${int(j['salary_min']):,}–${int(j['salary_max']):,}"
         elif j.get("salary_min"):
             salary = f" · ${int(j['salary_min']):,}+"
+        elif j.get("salary_range"):
+            salary = f" · {j['salary_range']}"
 
         job_rows += f"""
         <tr>
