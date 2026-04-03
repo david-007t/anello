@@ -5,7 +5,7 @@ import { motion, useInView } from 'framer-motion';
 import { Radar, IconContainer } from '@/components/ui/radar';
 export function RadarSection() {
   const ref = useRef<HTMLElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.4 });
+  const isInView = useInView(ref, { once: false, amount: 0.4 });
 
   return (
     <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
