@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 from supabase import create_client
 from jobs import fetch_jobs
 from scorer import filter_and_rank
-from tailor import tailor_resume
+from tailor import tailor_job
 from digest import send_digest
 from notifier import notify_match, already_notified, log_notification
 
@@ -174,7 +174,9 @@ def run(on_step=None, send_digest_email: bool = True):
         for i, job in enumerate(ranked[:TOP_TAILOR_COUNT]):
             if resume_text:
                 try:
-                    ranked[i]["tailored_resume"] = tailor_resume(resume_text, job)
+                    tailor_result = tailor_job(resume_text, job)
+                    ranked[i]["tailored_resume"] = tailor_result.get("resume_markdown", resume_text)
+                    ranked[i]["tailored_cover_letter"] = tailor_result.get("cover_letter", "")
                 except Exception as e:
                     logger.error(f"Tailoring failed for {job.get('title')} at {job.get('company')}: {e} — continuing")
 
@@ -187,9 +189,7 @@ def run(on_step=None, send_digest_email: bool = True):
                 continue
 
             # Cover letter is only available if we tailored (top N only)
-            # tailor_resume() returns a string (resume_markdown), not a dict —
-            # so no cover letter is available through this path.
-            cover_letter = ""
+            cover_letter = job.get("tailored_cover_letter", "")
             resume_pdf = b""
 
             sent = notify_match(job, user_email, user_name, cover_letter, resume_pdf)
@@ -223,6 +223,7 @@ def run(on_step=None, send_digest_email: bool = True):
                 "location": job.get("location", ""),
                 "salary_range": _fmt_salary(job),
                 "source": job.get("source", "adzuna"),
+                "description": job.get("description", ""),
                 "applied": False,
             })
 

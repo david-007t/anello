@@ -1,6 +1,6 @@
 create table if not exists job_notifications (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid not null,
+  user_id text not null,
   job_url text not null,
   job_title text,
   company text,
