@@ -34,8 +34,14 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #000000;
+  overscroll-behavior: none;
+}
+
 body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   background: #000000;
   color: #ffffff;
+  overscroll-behavior: none;
 }
