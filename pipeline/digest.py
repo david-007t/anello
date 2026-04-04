@@ -31,11 +31,11 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
 
         job_rows += f"""
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #f1f5f9;">
-            <a href="{j.get('url','#')}" style="font-weight:600;color:#4f46e5;text-decoration:none;">
+          <td style="padding:14px 0;border-bottom:1px solid #1a1a1a;">
+            <a href="{j.get('url','#')}" style="font-weight:600;color:#fff;text-decoration:none;font-size:14px;">
               {j.get('title','')}
             </a><br>
-            <span style="color:#64748b;font-size:13px;">
+            <span style="color:#555;font-size:13px;">
               {j.get('company','')} · {j.get('location','')}{salary}
             </span>
           </td>
@@ -43,24 +43,19 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
 
     html = f"""
     <html>
-    <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;margin:0;padding:0;">
-      <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e2e8f0;">
-        <h1 style="font-size:22px;font-weight:800;color:#0f172a;margin:0 0 4px;">
-          Your daily job digest
-        </h1>
-        <p style="color:#64748b;font-size:14px;margin:0 0 24px;">
-          Hi {user_name or 'there'} — here are today's top matches.
+    <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#000;margin:0;padding:0;">
+      <div style="max-width:560px;margin:40px auto;background:#0d0d0d;border-radius:16px;padding:36px;border:1px solid #1f1f1f;">
+        <p style="font-size:22px;font-weight:800;color:#fff;margin:0 0 4px;letter-spacing:-0.5px;">
+          Your {len(jobs)} matches today
+        </p>
+        <p style="color:#555;font-size:13px;margin:0 0 28px;">
+          Hi {user_name or 'there'} — here's what Anelo found.
         </p>
         <table style="width:100%;border-collapse:collapse;">
           {job_rows}
         </table>
-        <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f1f5f9;">
-          <a href="https://anelo.io/dashboard" style="display:inline-block;background:#4f46e5;color:#fff;font-weight:600;font-size:14px;padding:10px 20px;border-radius:10px;text-decoration:none;">
-            View dashboard →
-          </a>
-        </div>
-        <p style="color:#94a3b8;font-size:12px;margin-top:20px;">
-          Anelo · <a href="https://anelo.io" style="color:#94a3b8;">anelo.io</a>
+        <p style="color:#333;font-size:12px;margin-top:28px;border-top:1px solid #1a1a1a;padding-top:20px;">
+          Anelo · <a href="https://anelo.io" style="color:#444;text-decoration:none;">anelo.io</a>
         </p>
       </div>
     </body>
