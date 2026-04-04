@@ -63,7 +63,7 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
     remaining = len(jobs) - 5
     more_note = ""
     if remaining > 0:
-        more_note = f'<p style="font-size:13px;color:#94a3b8;text-align:center;margin:16px 0 0;">+ {remaining} more match{"es" if remaining != 1 else ""} in your <a href="https://anelo.io/dashboard/digest" style="color:#64748b;text-decoration:underline;">digest</a>.</p>'
+        more_note = f'<p style="font-size:13px;color:#94a3b8;text-align:center;margin:16px 0 0;">+ {remaining} more match{"es" if remaining != 1 else ""} found today.</p>'
 
     name = user_name or "there"
 
@@ -107,9 +107,6 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
             "subject": "Your top 5 job matches today",
             "html": html,
             "text": text,
-            "headers": {
-                "List-Unsubscribe": f"<mailto:unsubscribe@anelo.io?subject=unsubscribe>"
-            }
         })
         logger.info(f"Digest sent to {user_email} ({len(jobs)} jobs)")
         return True

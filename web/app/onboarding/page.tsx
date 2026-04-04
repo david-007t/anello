@@ -311,7 +311,7 @@ function OnboardingInner() {
             ideal_job_title_3: data.role_3 ?? '',
             target_salary: data.min_salary ?? '',
             desired_locations: data.location ?? '',
-            work_life_balance: data.work_life_balance ?? '',
+            work_life_balance: (data.work_life_balance ?? '').split(', ').filter((v: string) => ['Compensation', 'Work-life balance', 'Growth & learning', 'Mission & impact', 'Startup energy', 'Stability', 'Remote flexibility', 'Team & culture'].includes(v)).join(', '),
             company_culture: data.company_types ?? '',
             skills_to_acquire: data.skills ?? '',
             industry_domain: data.industry_domain ?? '',
