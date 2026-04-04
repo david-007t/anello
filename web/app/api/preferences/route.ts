@@ -10,11 +10,10 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabaseAdmin()
     .from("preferences")
-    .upsert({ user_id: userId, ...body, updated_at: new Date().toISOString() });
+    .upsert({ user_id: userId, ...body, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
 
   if (error) {
     console.error("[preferences POST] Supabase error:", JSON.stringify(error));
-    console.error("[preferences POST] SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
