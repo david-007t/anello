@@ -38,7 +38,7 @@ interface FormState {
 }
 
 const inputClass =
-  'w-full px-4 py-3 rounded-xl bg-white/[0.08] border border-white/20 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
+  'w-full px-4 py-3 rounded-xl bg-white/[0.08] border border-white/20 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent';
 
 const stepLabels = ['Current Self', 'Future Self', 'Preview'];
 
@@ -173,7 +173,6 @@ const EEO_QUESTIONS: ConvQuestion[] = [
   {
     id: 'sponsorship',
     question: 'Do you require visa sponsorship?',
-    subtitle: "Employers ask this on every application. We'll auto-fill it for you.",
     type: 'single',
     field: 'work_authorization',
     options: [
@@ -410,14 +409,6 @@ function OnboardingInner() {
   }
 
   async function handleStep3Submit() {
-    const next: Record<string, string> = {};
-    if (!form.ideal_job_title_1.trim()) {
-      next.ideal_job_title_1 = 'At least one ideal job title is required.';
-    }
-    if (Object.keys(next).length > 0) {
-      setErrors(next);
-      return;
-    }
     setErrors({});
     setSubmitting(true);
     try {
@@ -492,14 +483,21 @@ function OnboardingInner() {
     const handleMultiToggle = (value: string) => {
       if (Array.isArray(q.field)) return;
       const key = q.field as keyof FormState;
-      const current = (form[key] as string) || '';
-      const parts = current ? current.split(', ') : [];
-      const idx = parts.indexOf(value);
-      if (idx >= 0) {
-        set(key, parts.filter((_, i) => i !== idx).join(', '));
-      } else if (!q.maxSelect || parts.length < q.maxSelect) {
-        set(key, [...parts, value].join(', '));
-      }
+      setForm((prev) => {
+        const current = (prev[key] as string) || '';
+        const parts = current ? current.split(', ').filter(Boolean) : [];
+        const idx = parts.indexOf(value);
+        let next: string[];
+        if (idx >= 0) {
+          next = parts.filter((_, i) => i !== idx);
+        } else if (!q.maxSelect || parts.length < q.maxSelect) {
+          next = [...parts, value];
+        } else {
+          next = parts;
+        }
+        return { ...prev, [key]: next.join(', ') };
+      });
+      setErrors((e) => { const n = { ...e }; delete n[key as string]; return n; });
     };
 
     const isMultiSelected = (value: string) => {
@@ -529,7 +527,7 @@ function OnboardingInner() {
             <div
               key={i}
               className={`h-1 rounded-full flex-1 transition-all ${
-                i < currentIdx ? 'bg-indigo-500' : i === currentIdx ? 'bg-indigo-400' : 'bg-white/10'
+                i < currentIdx ? 'bg-white' : i === currentIdx ? 'bg-white/70' : 'bg-white/10'
               }`}
             />
           ))}
@@ -537,7 +535,7 @@ function OnboardingInner() {
 
         {/* Question */}
         <div>
-          <p className="text-xs text-indigo-400 font-mono mb-2">{currentIdx + 1} / {questions.length}</p>
+          <p className="text-xs text-white/40 font-mono mb-2">{currentIdx + 1} / {questions.length}</p>
           <h2 className="text-2xl font-bold text-white leading-snug">{q.question}</h2>
           {q.subtitle && <p className="text-sm text-white/40 mt-1">{q.subtitle}</p>}
         </div>
@@ -553,7 +551,7 @@ function OnboardingInner() {
                   onClick={() => handleSingleSelect(opt.value)}
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
                     selected
-                      ? 'border-indigo-500 bg-indigo-500/15 text-white'
+                      ? 'border-white/80 bg-white/10 text-white'
                       : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
                   }`}
                 >
@@ -562,7 +560,7 @@ function OnboardingInner() {
                   {selected && (
                     <span className="ml-auto shrink-0">
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M2 7l4 4 6-7" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M2 7l4 4 6-7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </span>
                   )}
@@ -583,7 +581,7 @@ function OnboardingInner() {
                     onClick={() => handleMultiToggle(opt.value)}
                     className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
                       selected
-                        ? 'border-indigo-500 bg-indigo-500/15 text-white'
+                        ? 'border-white/80 bg-white/10 text-white'
                         : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
                     }`}
                   >
@@ -592,7 +590,7 @@ function OnboardingInner() {
                     {selected && (
                       <span className="ml-auto shrink-0">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M2 7l4 4 6-7" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M2 7l4 4 6-7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </span>
                     )}
@@ -804,10 +802,10 @@ function OnboardingInner() {
                     {/* Progress (resume is the first of 8 total: resume + 7 questions) */}
                     <div className="flex items-center gap-1.5 mb-2">
                       {Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i === 0 ? 'bg-indigo-400' : 'bg-white/10'}`} />
+                        <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i === 0 ? 'bg-white/70' : 'bg-white/10'}`} />
                       ))}
                     </div>
-                    <p className="text-xs text-indigo-400 font-mono mb-2">1 / 8</p>
+                    <p className="text-xs text-white/40 font-mono mb-2">1 / 8</p>
 
                     <div>
                       <h2 className="text-2xl font-bold text-white leading-snug">Drop your resume.</h2>
@@ -822,7 +820,7 @@ function OnboardingInner() {
                         <p className="text-sm text-white/50">Uploading…</p>
                       ) : resumeFileName ? (
                         <div className="space-y-1">
-                          <p className="text-sm text-indigo-400 font-medium">✓ {resumeFileName}</p>
+                          <p className="text-sm text-white/80 font-medium">✓ {resumeFileName}</p>
                           <p className="text-xs text-white/30">Click to replace</p>
                         </div>
                       ) : (
@@ -911,10 +909,10 @@ function OnboardingInner() {
                     className="space-y-6"
                   >
                     <div>
-                      <p className="text-xs text-indigo-400 font-mono mb-2">Almost done</p>
+                      <p className="text-xs text-white/40 font-mono mb-2">Almost done</p>
                       <h2 className="text-2xl font-bold text-white leading-snug">One last thing.</h2>
                       <p className="text-sm text-white/40 mt-2 leading-relaxed">
-                        Every job application asks these questions. Answer them once here and we&apos;ll auto-fill them for every application — forever.
+                        These questions come up on every application. Answer them once so we have them ready.
                       </p>
                     </div>
                     <HoverButton
@@ -997,7 +995,7 @@ function OnboardingInner() {
                         <p className="text-xs text-white/40 italic">
                           This role aligns with your ambition to lead product at a high-growth fintech. Stripe&apos;s global impact matches your values around meaningful work.
                         </p>
-                        <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                        <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
                       </div>
@@ -1014,7 +1012,7 @@ function OnboardingInner() {
                         <p className="text-xs text-white/40 italic">
                           Notion&apos;s collaborative culture is a strong fit for your desired work environment. This position offers the leadership scope your Future Self is targeting.
                         </p>
-                        <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                        <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
                       </div>
@@ -1031,7 +1029,7 @@ function OnboardingInner() {
                         <p className="text-xs text-white/40 italic">
                           OpenAI sits at the intersection of AI and massive impact — two themes central to your Future Self profile. A strategic move that aligns with your skills-to-acquire goal.
                         </p>
-                        <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                        <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
                       </div>
@@ -1105,9 +1103,9 @@ function OnboardingInner() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
             >
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center text-center space-y-4">
-                <div className="w-14 h-14 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-6">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 13l4 4L19 7" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5 13l4 4L19 7" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <h1 className="text-3xl font-bold text-white">Your Anelo is Active!</h1>
