@@ -250,6 +250,17 @@ function OnboardingInner() {
     }
   }
 
+  async function handleSendDigest() {
+    setSubmitting(true);
+    try {
+      await fetch('/api/run-digest', { method: 'POST' });
+    } catch {
+      // Non-blocking — even if trigger fails, advance to confirmation
+    }
+    setSubmitting(false);
+    goToStep(5);
+  }
+
   async function handleStep3SaveAndExit() {
     const next: Record<string, string> = {};
     if (!form.ideal_job_title_1.trim()) {
@@ -886,14 +897,15 @@ function OnboardingInner() {
 
                 <div className="flex flex-col gap-3">
                   <HoverButton
-                    onClick={() => goToStep(5)}
+                    onClick={handleSendDigest}
+                    disabled={submitting}
                     backgroundColor="rgba(255,255,255,0.05)"
                     glowColor="#9ca3af"
                     textColor="#e5e7eb"
                     hoverTextColor="#ffffff"
                     className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full"
                   >
-                    Looks good! Send my first digest &rarr;
+                    {submitting ? 'Sending...' : 'Looks good! Send my first digest \u2192'}
                   </HoverButton>
                   <button
                     onClick={() => goToStep(3)}
