@@ -44,7 +44,7 @@ export default function ContinueWithGoogle() {
       const { error: signInError } = await signIn.sso({
         strategy: 'oauth_google',
         redirectUrl: `${origin}/sso-callback`,
-        redirectCallbackUrl: `${origin}/dashboard`,
+        redirectCallbackUrl: `${origin}/`,
       });
       if (signInError) {
         const signInCode = (signInError as any)?.code;

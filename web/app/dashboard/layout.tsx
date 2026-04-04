@@ -59,6 +59,7 @@ export default async function DashboardLayout({
 }) {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
+  redirect("/");
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -84,10 +85,10 @@ export default async function DashboardLayout({
             <UserButton />
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-900 truncate">
-                {user.firstName || user.emailAddresses[0]?.emailAddress}
+                {user?.firstName || user?.emailAddresses[0]?.emailAddress}
               </p>
               <p className="text-xs text-slate-400 truncate">
-                {user.emailAddresses[0]?.emailAddress}
+                {user?.emailAddresses[0]?.emailAddress}
               </p>
             </div>
           </div>

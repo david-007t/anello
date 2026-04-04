@@ -31,16 +31,14 @@ interface FormState {
   skills_to_acquire: string;
   industry_domain: string;
   values_impact: string;
+
+  // EEO extras
+  gender: string;
+  race_ethnicity: string;
 }
 
 const inputClass =
   'w-full px-4 py-3 rounded-xl bg-white/[0.08] border border-white/20 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
-
-const labelClass = 'text-sm font-medium text-white/70 mb-1.5 block';
-
-const selectClass = inputClass;
-
-const textareaClass = `${inputClass} resize-none`;
 
 const stepLabels = ['Current Self', 'Future Self', 'Preview'];
 
@@ -66,7 +64,194 @@ const defaultForm: FormState = {
   skills_to_acquire: '',
   industry_domain: '',
   values_impact: '',
+
+  gender: '',
+  race_ethnicity: '',
 };
+
+// ─── Conversational question types ───────────────────────────────────────────
+
+type QuestionType = 'single' | 'multi' | 'text' | 'roles';
+
+interface ConvQuestion {
+  id: string;
+  question: string;
+  subtitle?: string;
+  type: QuestionType;
+  field?: keyof FormState | (keyof FormState)[];
+  options?: { label: string; value: string; emoji?: string }[];
+  maxSelect?: number;
+  placeholder?: string;
+}
+
+const PROFILE_QUESTIONS: ConvQuestion[] = [
+  {
+    id: 'career_stage',
+    question: 'Where are you in your career?',
+    type: 'single',
+    field: 'years_experience',
+    options: [
+      { label: 'Early career', value: '3', emoji: '🌱' },
+      { label: 'Mid-level', value: '8', emoji: '📈' },
+      { label: 'Senior', value: '15', emoji: '⭐' },
+      { label: 'Director+', value: '20', emoji: '🏆' },
+    ],
+  },
+  {
+    id: 'current_role',
+    question: "What's your current role?",
+    subtitle: 'Be specific — this helps us find the right matches.',
+    type: 'text',
+    field: 'current_role_title',
+    placeholder: 'e.g. Senior Product Manager',
+  },
+  {
+    id: 'move_type',
+    question: 'What kind of move are you making?',
+    type: 'single',
+    field: 'values_impact',
+    options: [
+      { label: 'Same role, better company', value: 'Lateral move to a stronger company' },
+      { label: 'Step up to leadership', value: 'Stepping into leadership' },
+      { label: 'Career pivot', value: 'Full career pivot' },
+      { label: 'Re-entering the market', value: 'Re-entering the market' },
+    ],
+  },
+  {
+    id: 'priorities',
+    question: 'What matters most in your next role?',
+    subtitle: 'Pick up to 2.',
+    type: 'multi',
+    field: 'work_life_balance',
+    maxSelect: 2,
+    options: [
+      { label: 'Compensation', value: 'Compensation', emoji: '💰' },
+      { label: 'Work-life balance', value: 'Work-life balance', emoji: '⚖️' },
+      { label: 'Growth & learning', value: 'Growth & learning', emoji: '🧠' },
+      { label: 'Mission & impact', value: 'Mission & impact', emoji: '🎯' },
+      { label: 'Startup energy', value: 'Startup energy', emoji: '⚡' },
+      { label: 'Stability', value: 'Stability', emoji: '🏛️' },
+      { label: 'Remote flexibility', value: 'Remote flexibility', emoji: '🌍' },
+      { label: 'Team & culture', value: 'Team & culture', emoji: '🤝' },
+    ],
+  },
+  {
+    id: 'location',
+    question: 'Where do you want to work?',
+    type: 'single',
+    field: 'desired_locations',
+    options: [
+      { label: 'Remote only', value: 'Remote', emoji: '🏠' },
+      { label: 'Hybrid (2–3 days)', value: 'Hybrid', emoji: '🔄' },
+      { label: 'On-site', value: 'On-site', emoji: '🏢' },
+      { label: 'Open to anything', value: 'Flexible', emoji: '✈️' },
+    ],
+  },
+  {
+    id: 'salary',
+    question: "What's your salary target?",
+    type: 'single',
+    field: 'target_salary',
+    options: [
+      { label: '$80K–$120K', value: '100000' },
+      { label: '$120K–$160K', value: '140000' },
+      { label: '$160K–$200K', value: '180000' },
+      { label: '$200K+', value: '200000' },
+      { label: 'Not sure yet', value: '' },
+    ],
+  },
+  {
+    id: 'target_roles',
+    question: 'What roles are you targeting?',
+    subtitle: "Up to 3. We'll search all of them.",
+    type: 'roles',
+    field: ['ideal_job_title_1', 'ideal_job_title_2', 'ideal_job_title_3'],
+  },
+];
+
+const EEO_QUESTIONS: ConvQuestion[] = [
+  {
+    id: 'sponsorship',
+    question: 'Do you require visa sponsorship?',
+    subtitle: "Employers ask this on every application. We'll auto-fill it for you.",
+    type: 'single',
+    field: 'work_authorization',
+    options: [
+      { label: "No, I'm authorized to work", value: "No, I don't require sponsorship" },
+      { label: 'Yes, I need sponsorship', value: 'Yes, I require sponsorship' },
+      { label: 'It depends on the role', value: 'Prefer not to say' },
+    ],
+  },
+  {
+    id: 'veteran',
+    question: 'Veteran status',
+    type: 'single',
+    field: 'veteran_status',
+    options: [
+      { label: 'Not a veteran', value: 'No' },
+      { label: 'Veteran', value: 'Yes' },
+      { label: 'Active duty', value: 'Active duty' },
+      { label: 'Prefer not to say', value: 'Prefer not to say' },
+    ],
+  },
+  {
+    id: 'disability',
+    question: 'Disability status',
+    type: 'single',
+    field: 'disability_status',
+    options: [
+      { label: 'No disability', value: 'No' },
+      { label: 'Yes, I have a disability', value: 'Yes' },
+      { label: 'Prefer not to say', value: 'Prefer not to say' },
+    ],
+  },
+  {
+    id: 'clearance',
+    question: 'Security clearance',
+    type: 'single',
+    field: 'security_clearance',
+    options: [
+      { label: 'None', value: 'None' },
+      { label: 'Confidential', value: 'Confidential' },
+      { label: 'Secret', value: 'Secret' },
+      { label: 'Top Secret', value: 'Top Secret' },
+      { label: 'TS/SCI', value: 'TS/SCI' },
+      { label: 'Prefer not to say', value: 'Prefer not to say' },
+    ],
+  },
+  {
+    id: 'gender',
+    question: 'Gender',
+    subtitle: 'Used for EEO reporting on job applications.',
+    type: 'single',
+    field: 'gender',
+    options: [
+      { label: 'Man', value: 'Man' },
+      { label: 'Woman', value: 'Woman' },
+      { label: 'Non-binary', value: 'Non-binary' },
+      { label: 'Prefer to self-describe', value: 'Self-describe' },
+      { label: 'Prefer not to say', value: 'Prefer not to say' },
+    ],
+  },
+  {
+    id: 'race',
+    question: 'Race / Ethnicity',
+    subtitle: 'Used for EEO reporting on job applications.',
+    type: 'single',
+    field: 'race_ethnicity',
+    options: [
+      { label: 'White', value: 'White' },
+      { label: 'Black or African American', value: 'Black or African American' },
+      { label: 'Hispanic or Latino', value: 'Hispanic or Latino' },
+      { label: 'Asian', value: 'Asian' },
+      { label: 'Native American or Alaska Native', value: 'Native American' },
+      { label: 'Two or more races', value: 'Two or more races' },
+      { label: 'Prefer not to say', value: 'Prefer not to say' },
+    ],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function OnboardingInner() {
   const router = useRouter();
@@ -76,12 +261,30 @@ function OnboardingInner() {
   const stepParam = parseInt(searchParams.get('step') ?? '1', 10);
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [convStep, setConvStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [digestFailed, setDigestFailed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [dataLoaded, setDataLoaded] = useState(!isEditMode);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormState>(defaultForm);
+  const [resumeFileName, setResumeFileName] = useState<string | null>(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+
+  // Always: fetch existing resume so returning users see it pre-loaded
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    fetch('/api/resume')
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (data?.file_name) {
+          setResumeFileName(data.file_name);
+          setForm((f) => ({ ...f, resume_uploaded: true }));
+        }
+      })
+      .catch(() => {});
+  }, [isLoaded, isSignedIn]);
 
   // In edit mode: fetch existing prefs and pre-fill, then jump to the requested step
   useEffect(() => {
@@ -115,6 +318,9 @@ function OnboardingInner() {
             skills_to_acquire: data.skills ?? '',
             industry_domain: data.industry_domain ?? '',
             values_impact: data.values_impact ?? '',
+            // EEO extras
+            gender: data.gender ?? '',
+            race_ethnicity: data.race_ethnicity ?? '',
           }));
         }
         setDataLoaded(true);
@@ -140,7 +346,28 @@ function OnboardingInner() {
     });
   }
 
+  async function handleResumeFile(file: File) {
+    setResumeUploading(true);
+    setResumeError('');
+    const formData = new FormData();
+    formData.append('resume', file);
+    try {
+      const res = await fetch('/api/resume/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setResumeFileName(file.name);
+        set('resume_uploaded', true);
+      } else {
+        setResumeError(data.error || 'Upload failed.');
+      }
+    } catch {
+      setResumeError('Upload failed. Try again.');
+    }
+    setResumeUploading(false);
+  }
+
   function goToStep(s: 1 | 2 | 3 | 4 | 5) {
+    setConvStep(0);
     setStep(s);
     window.scrollTo(0, 0);
   }
@@ -149,12 +376,11 @@ function OnboardingInner() {
     const next: Record<string, string> = {};
     if (!form.current_role_title.trim()) {
       next.current_role_title = 'Current role title is required.';
-    }
-    if (Object.keys(next).length > 0) {
       setErrors(next);
       return;
     }
     setErrors({});
+    setConvStep(0); // reset for step 3
     goToStep(3);
   }
 
@@ -167,13 +393,6 @@ function OnboardingInner() {
         body: JSON.stringify({
           current_role_title: form.current_role_title,
           years_experience: form.years_experience,
-          key_skills: form.key_skills,
-          current_salary: form.current_salary,
-          current_location: form.current_location,
-          work_authorization: form.work_authorization,
-          disability_status: form.disability_status,
-          veteran_status: form.veteran_status,
-          security_clearance: form.security_clearance,
         }),
       });
       if (!res.ok) {
@@ -188,20 +407,6 @@ function OnboardingInner() {
     }
     setSubmitting(false);
     return true;
-  }
-
-  async function handleStep2SaveAndExit() {
-    const next: Record<string, string> = {};
-    if (!form.current_role_title.trim()) {
-      next.current_role_title = 'Current role title is required.';
-    }
-    if (Object.keys(next).length > 0) {
-      setErrors(next);
-      return;
-    }
-    setErrors({});
-    const ok = await saveCurrentSelf();
-    if (ok) router.push('/dashboard');
   }
 
   async function handleStep3Submit() {
@@ -231,6 +436,12 @@ function OnboardingInner() {
           work_life_balance: form.work_life_balance,
           industry_domain: form.industry_domain,
           values_impact: form.values_impact,
+          work_authorization: form.work_authorization,
+          disability_status: form.disability_status,
+          veteran_status: form.veteran_status,
+          security_clearance: form.security_clearance,
+          gender: form.gender,
+          race_ethnicity: form.race_ethnicity,
         }),
       });
       if (!res.ok) {
@@ -244,11 +455,7 @@ function OnboardingInner() {
       return;
     }
     setSubmitting(false);
-    if (isEditMode) {
-      router.push('/dashboard');
-    } else {
-      goToStep(4);
-    }
+    goToStep(4);
   }
 
   async function handleSendDigest() {
@@ -263,48 +470,218 @@ function OnboardingInner() {
     goToStep(5);
   }
 
-  async function handleStep3SaveAndExit() {
-    const next: Record<string, string> = {};
-    if (!form.ideal_job_title_1.trim()) {
-      next.ideal_job_title_1 = 'At least one ideal job title is required.';
-    }
-    if (Object.keys(next).length > 0) {
-      setErrors(next);
-      return;
-    }
-    setErrors({});
-    setSubmitting(true);
-    try {
-      const res = await fetch('/api/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: form.ideal_job_title_1,
-          role_2: form.ideal_job_title_2,
-          role_3: form.ideal_job_title_3,
-          location: form.desired_locations,
-          experience_max: form.years_experience,
-          min_salary: form.target_salary,
-          company_types: form.company_culture,
-          skills: form.skills_to_acquire,
-          work_life_balance: form.work_life_balance,
-          industry_domain: form.industry_domain,
-          values_impact: form.values_impact,
-        }),
-      });
-      if (!res.ok) {
-        setErrors({ submit: 'Could not save your preferences. Please try again.' });
-        setSubmitting(false);
-        return;
+  // ── Conversational question renderer (defined inside component — uses form/set/errors state) ──
+
+  function renderConvQuestion(
+    questions: ConvQuestion[],
+    currentIdx: number,
+    onNext: () => void,
+    onBack: () => void,
+    isLastQuestion: boolean,
+    nextLabel: string = 'Continue →'
+  ) {
+    const q = questions[currentIdx];
+    if (!q) return null;
+
+    const handleSingleSelect = (value: string) => {
+      if (Array.isArray(q.field)) return;
+      set(q.field as keyof FormState, value);
+      setTimeout(onNext, 180);
+    };
+
+    const handleMultiToggle = (value: string) => {
+      if (Array.isArray(q.field)) return;
+      const key = q.field as keyof FormState;
+      const current = (form[key] as string) || '';
+      const parts = current ? current.split(', ') : [];
+      const idx = parts.indexOf(value);
+      if (idx >= 0) {
+        set(key, parts.filter((_, i) => i !== idx).join(', '));
+      } else if (!q.maxSelect || parts.length < q.maxSelect) {
+        set(key, [...parts, value].join(', '));
       }
-    } catch {
-      setErrors({ submit: 'Network error. Please check your connection and try again.' });
-      setSubmitting(false);
-      return;
-    }
-    setSubmitting(false);
-    router.push('/dashboard');
+    };
+
+    const isMultiSelected = (value: string) => {
+      if (Array.isArray(q.field)) return false;
+      const current = (form[q.field as keyof FormState] as string) || '';
+      return current.split(', ').includes(value);
+    };
+
+    const multiCount = () => {
+      if (Array.isArray(q.field)) return 0;
+      const current = (form[q.field as keyof FormState] as string) || '';
+      return current ? current.split(', ').filter(Boolean).length : 0;
+    };
+
+    return (
+      <motion.div
+        key={q.id}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="space-y-6"
+      >
+        {/* Progress */}
+        <div className="flex items-center gap-1.5 mb-2">
+          {questions.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 rounded-full flex-1 transition-all ${
+                i < currentIdx ? 'bg-indigo-500' : i === currentIdx ? 'bg-indigo-400' : 'bg-white/10'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Question */}
+        <div>
+          <p className="text-xs text-indigo-400 font-mono mb-2">{currentIdx + 1} / {questions.length}</p>
+          <h2 className="text-2xl font-bold text-white leading-snug">{q.question}</h2>
+          {q.subtitle && <p className="text-sm text-white/40 mt-1">{q.subtitle}</p>}
+        </div>
+
+        {/* Options */}
+        {q.type === 'single' && q.options && (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {q.options.map((opt) => {
+              const selected = !Array.isArray(q.field) && form[q.field as keyof FormState] === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSingleSelect(opt.value)}
+                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
+                    selected
+                      ? 'border-indigo-500 bg-indigo-500/15 text-white'
+                      : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                >
+                  {opt.emoji && <span className="text-lg shrink-0">{opt.emoji}</span>}
+                  <span className="text-sm font-medium">{opt.label}</span>
+                  {selected && (
+                    <span className="ml-auto shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 7l4 4 6-7" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {q.type === 'multi' && q.options && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {q.options.map((opt) => {
+                const selected = isMultiSelected(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleMultiToggle(opt.value)}
+                    className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
+                      selected
+                        ? 'border-indigo-500 bg-indigo-500/15 text-white'
+                        : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    {opt.emoji && <span className="text-lg shrink-0">{opt.emoji}</span>}
+                    <span className="text-sm font-medium">{opt.label}</span>
+                    {selected && (
+                      <span className="ml-auto shrink-0">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 7l4 4 6-7" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <HoverButton
+              onClick={onNext}
+              disabled={multiCount() === 0}
+              backgroundColor="rgba(255,255,255,0.05)"
+              glowColor="#9ca3af"
+              textColor="#e5e7eb"
+              hoverTextColor="#ffffff"
+              className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+            >
+              {nextLabel}
+            </HoverButton>
+          </div>
+        )}
+
+        {q.type === 'text' && (
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={!Array.isArray(q.field) ? (form[q.field as keyof FormState] as string) : ''}
+              onChange={(e) => {
+                if (!Array.isArray(q.field)) set(q.field as keyof FormState, e.target.value);
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && onNext()}
+              placeholder={q.placeholder}
+              className={inputClass}
+              autoFocus
+            />
+            <HoverButton
+              onClick={onNext}
+              backgroundColor="rgba(255,255,255,0.05)"
+              glowColor="#9ca3af"
+              textColor="#e5e7eb"
+              hoverTextColor="#ffffff"
+              className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+            >
+              {nextLabel}
+            </HoverButton>
+          </div>
+        )}
+
+        {q.type === 'roles' && Array.isArray(q.field) && (
+          <div className="space-y-4">
+            {q.field.map((fieldKey, i) => (
+              <div key={fieldKey}>
+                <input
+                  type="text"
+                  value={form[fieldKey] as string}
+                  onChange={(e) => set(fieldKey, e.target.value)}
+                  placeholder={i === 0 ? 'Primary role, e.g. Head of Product' : i === 1 ? 'Role 2 (optional)' : 'Role 3 (optional)'}
+                  className={inputClass}
+                  autoFocus={i === 0}
+                />
+              </div>
+            ))}
+            {errors.ideal_job_title_1 && (
+              <p className="text-red-400 text-xs">{errors.ideal_job_title_1}</p>
+            )}
+            <HoverButton
+              onClick={onNext}
+              backgroundColor="rgba(255,255,255,0.05)"
+              glowColor="#9ca3af"
+              textColor="#e5e7eb"
+              hoverTextColor="#ffffff"
+              className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+            >
+              {nextLabel}
+            </HoverButton>
+          </div>
+        )}
+
+        {/* Back */}
+        <button
+          onClick={onBack}
+          className="text-sm text-white/30 hover:text-white/60 transition-colors"
+        >
+          ← Back
+        </button>
+      </motion.div>
+    );
   }
+
+  // ─── Guards ───────────────────────────────────────────────────────────────
 
   if (!isLoaded || (isEditMode && !dataLoaded)) {
     return (
@@ -406,7 +783,7 @@ function OnboardingInner() {
             </motion.div>
           )}
 
-          {/* Step 2 — Current Self */}
+          {/* Step 2 — Current Self (conversational) */}
           {step === 2 && (
             <motion.div
               key="step-2"
@@ -415,209 +792,107 @@ function OnboardingInner() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
             >
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 space-y-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Your Starting Point: Who Are You Now?</h1>
-                  <p className="text-slate-400 text-sm">This is your foundation. Let Anelo understand where you are today.</p>
-                </div>
-
-                {/* Resume upload */}
-                <div>
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-white/40 transition-colors"
+                {/* Resume upload — always shown as Q0 */}
+                {convStep === 0 && (
+                  <motion.div
+                    key="resume-upload"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6"
                   >
-                    {form.resume_uploaded ? (
-                      <p className="text-sm text-indigo-400">
-                        ✓ Resume uploaded
-                      </p>
-                    ) : (
-                      <p className="text-sm text-white/40">
-                        Drag &amp; drop your resume here, or click to upload
-                      </p>
-                    )}
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={() => set('resume_uploaded', true)}
-                  />
-                </div>
+                    {/* Progress (resume is the first of 8 total: resume + 7 questions) */}
+                    <div className="flex items-center gap-1.5 mb-2">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i === 0 ? 'bg-indigo-400' : 'bg-white/10'}`} />
+                      ))}
+                    </div>
+                    <p className="text-xs text-indigo-400 font-mono mb-2">1 / 8</p>
 
-                {/* Divider */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-xs text-white/30">or fill in manually</span>
-                  <div className="flex-1 h-px bg-white/10" />
-                </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white leading-snug">Drop your resume.</h2>
+                      <p className="text-sm text-white/40 mt-1">We&apos;ll extract what we can so you answer fewer questions.</p>
+                    </div>
 
-                {/* Manual fields */}
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="current_role_title" className={labelClass}>Current role title *</label>
-                    <input
-                      id="current_role_title"
-                      type="text"
-                      value={form.current_role_title}
-                      onChange={(e) => set('current_role_title', e.target.value)}
-                      placeholder="e.g. Senior Product Manager"
-                      className={inputClass}
-                      aria-required="true"
-                    />
-                    {errors.current_role_title && (
-                      <p className="text-red-400 text-xs mt-1">{errors.current_role_title}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="years_experience" className={labelClass}>Years of experience</label>
-                    <input
-                      id="years_experience"
-                      type="number"
-                      min={0}
-                      value={form.years_experience}
-                      onChange={(e) => set('years_experience', e.target.value)}
-                      placeholder="e.g. 5"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="key_skills" className={labelClass}>Key skills</label>
-                    <input
-                      id="key_skills"
-                      type="text"
-                      value={form.key_skills}
-                      onChange={(e) => set('key_skills', e.target.value)}
-                      placeholder="e.g. React, Python, SQL"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="current_salary" className={labelClass}>Current salary (optional)</label>
-                    <input
-                      id="current_salary"
-                      type="text"
-                      value={form.current_salary}
-                      onChange={(e) => set('current_salary', e.target.value)}
-                      placeholder="e.g. 120000 (optional)"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="current_location" className={labelClass}>Current location</label>
-                    <input
-                      id="current_location"
-                      type="text"
-                      value={form.current_location}
-                      onChange={(e) => set('current_location', e.target.value)}
-                      placeholder="e.g. San Francisco, CA"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-
-                {/* EEO divider */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-xs text-white/30">A few quick details to find 100% right opportunities:</span>
-                  <div className="flex-1 h-px bg-white/10" />
-                </div>
-
-                {/* Dropdowns */}
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="work_authorization" className={labelClass}>Work authorization / sponsorship</label>
-                    <select
-                      id="work_authorization"
-                      value={form.work_authorization}
-                      onChange={(e) => set('work_authorization', e.target.value)}
-                      className={selectClass}
+                    <div
+                      onClick={() => !resumeUploading && fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${resumeUploading ? 'cursor-wait border-white/20' : 'cursor-pointer hover:border-white/40 border-white/20'}`}
                     >
-                      <option value="Prefer not to say">Prefer not to say</option>
-                      <option value="Yes, I require sponsorship">Yes, I require sponsorship</option>
-                      <option value="No, I don't require sponsorship">No, I don&apos;t require sponsorship</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="disability_status" className={labelClass}>Disability status</label>
-                    <select
-                      id="disability_status"
-                      value={form.disability_status}
-                      onChange={(e) => set('disability_status', e.target.value)}
-                      className={selectClass}
-                    >
-                      <option value="Prefer not to say">Prefer not to say</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="veteran_status" className={labelClass}>Veteran status</label>
-                    <select
-                      id="veteran_status"
-                      value={form.veteran_status}
-                      onChange={(e) => set('veteran_status', e.target.value)}
-                      className={selectClass}
-                    >
-                      <option value="Prefer not to say">Prefer not to say</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="security_clearance" className={labelClass}>Security clearance</label>
-                    <select
-                      id="security_clearance"
-                      value={form.security_clearance}
-                      onChange={(e) => set('security_clearance', e.target.value)}
-                      className={selectClass}
-                    >
-                      <option value="None">None</option>
-                      <option value="Confidential">Confidential</option>
-                      <option value="Secret">Secret</option>
-                      <option value="Top Secret">Top Secret</option>
-                      <option value="TS/SCI">TS/SCI</option>
-                      <option value="Prefer not to say">Prefer not to say</option>
-                    </select>
-                  </div>
-                </div>
+                      {resumeUploading ? (
+                        <p className="text-sm text-white/50">Uploading…</p>
+                      ) : resumeFileName ? (
+                        <div className="space-y-1">
+                          <p className="text-sm text-indigo-400 font-medium">✓ {resumeFileName}</p>
+                          <p className="text-xs text-white/30">Click to replace</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-base font-medium text-white/60">Drop or click to upload</p>
+                          <p className="text-xs text-white/30">PDF or DOCX · Max 5MB</p>
+                        </div>
+                      )}
+                      {resumeError && <p className="text-xs text-red-400 mt-2">{resumeError}</p>}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleResumeFile(f); }}
+                    />
 
-                {errors.submit && (
-                  <p className="text-red-400 text-xs text-center">{errors.submit}</p>
+                    <HoverButton
+                      onClick={() => setConvStep(1)}
+                      backgroundColor="rgba(255,255,255,0.05)"
+                      glowColor="#9ca3af"
+                      textColor="#e5e7eb"
+                      hoverTextColor="#ffffff"
+                      className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+                    >
+                      {resumeFileName ? 'Looks good →' : 'Skip for now →'}
+                    </HoverButton>
+
+                    <button
+                      onClick={() => goToStep(1)}
+                      className="text-sm text-white/30 hover:text-white/60 transition-colors"
+                    >
+                      ← Back
+                    </button>
+                  </motion.div>
                 )}
 
-                <div className="flex flex-col gap-3">
-                  <HoverButton
-                    onClick={handleStep2Next}
-                    backgroundColor="rgba(255,255,255,0.05)"
-                    glowColor="#9ca3af"
-                    textColor="#e5e7eb"
-                    hoverTextColor="#ffffff"
-                    className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full"
-                  >
-                    Next: Define Your Future Self &rarr;
-                  </HoverButton>
-                  {isEditMode && (
-                    <button
-                      onClick={handleStep2SaveAndExit}
-                      disabled={submitting}
-                      className="text-sm text-white/50 hover:text-white/80 transition-colors text-center disabled:opacity-40"
-                    >
-                      {submitting ? 'Saving...' : 'Save & exit'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => goToStep(1)}
-                    className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
-                  >
-                    &larr; Back
-                  </button>
-                </div>
+                {/* Conversational questions Q1-Q7 (convStep 1-7) */}
+                {convStep >= 1 && convStep <= PROFILE_QUESTIONS.length && renderConvQuestion(
+                  PROFILE_QUESTIONS,
+                  convStep - 1,
+                  () => {
+                    // Validate roles question
+                    if (PROFILE_QUESTIONS[convStep - 1]?.id === 'target_roles') {
+                      if (!form.ideal_job_title_1.trim()) {
+                        setErrors({ ideal_job_title_1: 'At least one role is required.' });
+                        return;
+                      }
+                      setErrors({});
+                    }
+                    if (convStep < PROFILE_QUESTIONS.length) {
+                      setConvStep(convStep + 1);
+                    } else {
+                      // Done with profile — save current self + go to step 3
+                      handleStep2Next();
+                    }
+                  },
+                  () => {
+                    if (convStep > 1) setConvStep(convStep - 1);
+                    else setConvStep(0);
+                  },
+                  convStep === PROFILE_QUESTIONS.length,
+                  convStep === PROFILE_QUESTIONS.length ? 'Continue to final questions →' : 'Continue →'
+                )}
               </div>
             </motion.div>
           )}
 
-          {/* Step 3 — Future Self */}
+          {/* Step 3 — EEO questions (conversational) */}
           {step === 3 && (
             <motion.div
               key="step-3"
@@ -626,167 +901,60 @@ function OnboardingInner() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
             >
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 space-y-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Your Destination: Who Do You Want to Be?</h1>
-                  <p className="text-slate-400 text-sm">Design your ideal professional future. Anelo will work to make it a reality.</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="ideal_job_title_1" className={labelClass}>Ideal job title 1 *</label>
-                    <input
-                      id="ideal_job_title_1"
-                      type="text"
-                      value={form.ideal_job_title_1}
-                      onChange={(e) => set('ideal_job_title_1', e.target.value)}
-                      placeholder="e.g. Head of Product"
-                      className={inputClass}
-                      aria-required="true"
-                    />
-                    {errors.ideal_job_title_1 && (
-                      <p className="text-red-400 text-xs mt-1">{errors.ideal_job_title_1}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="ideal_job_title_2" className={labelClass}>Ideal job title 2</label>
-                    <input
-                      id="ideal_job_title_2"
-                      type="text"
-                      value={form.ideal_job_title_2}
-                      onChange={(e) => set('ideal_job_title_2', e.target.value)}
-                      placeholder="e.g. VP Engineering"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="ideal_job_title_3" className={labelClass}>Ideal job title 3</label>
-                    <input
-                      id="ideal_job_title_3"
-                      type="text"
-                      value={form.ideal_job_title_3}
-                      onChange={(e) => set('ideal_job_title_3', e.target.value)}
-                      placeholder="e.g. Chief of Staff"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="target_salary" className={labelClass}>Target salary</label>
-                    <input
-                      id="target_salary"
-                      type="text"
-                      value={form.target_salary}
-                      onChange={(e) => set('target_salary', e.target.value)}
-                      placeholder="e.g. 180000"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="desired_locations" className={labelClass}>Desired locations</label>
-                    <input
-                      id="desired_locations"
-                      type="text"
-                      value={form.desired_locations}
-                      onChange={(e) => set('desired_locations', e.target.value)}
-                      placeholder="e.g. New York, Remote"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="work_life_balance" className={labelClass}>Work-life balance</label>
-                    <select
-                      id="work_life_balance"
-                      value={form.work_life_balance}
-                      onChange={(e) => set('work_life_balance', e.target.value)}
-                      className={selectClass}
-                    >
-                      <option value="Prefer not to say">Prefer not to say</option>
-                      <option value="Balanced (9-5)">Balanced (9-5)</option>
-                      <option value="Flexible hours">Flexible hours</option>
-                      <option value="Remote-first">Remote-first</option>
-                      <option value="High-growth / hustle">High-growth / hustle</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="company_culture" className={labelClass}>Company culture</label>
-                    <input
-                      id="company_culture"
-                      type="text"
-                      value={form.company_culture}
-                      onChange={(e) => set('company_culture', e.target.value)}
-                      placeholder="e.g. Startup, mission-driven, collaborative"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="skills_to_acquire" className={labelClass}>Skills to acquire</label>
-                    <input
-                      id="skills_to_acquire"
-                      type="text"
-                      value={form.skills_to_acquire}
-                      onChange={(e) => set('skills_to_acquire', e.target.value)}
-                      placeholder="e.g. Leadership, AI/ML, Go"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="industry_domain" className={labelClass}>Industry / domain</label>
-                    <input
-                      id="industry_domain"
-                      type="text"
-                      value={form.industry_domain}
-                      onChange={(e) => set('industry_domain', e.target.value)}
-                      placeholder="e.g. FinTech, Healthcare, SaaS"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="values_impact" className={labelClass}>Values &amp; impact</label>
-                    <textarea
-                      id="values_impact"
-                      rows={3}
-                      value={form.values_impact}
-                      onChange={(e) => set('values_impact', e.target.value)}
-                      placeholder="What kind of impact do you want to have? (optional)"
-                      className={textareaClass}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {errors.submit && (
-                    <p className="text-red-400 text-xs text-center">{errors.submit}</p>
-                  )}
-                  <HoverButton
-                    onClick={handleStep3Submit}
-                    disabled={submitting}
-                    backgroundColor="rgba(255,255,255,0.05)"
-                    glowColor="#9ca3af"
-                    textColor="#e5e7eb"
-                    hoverTextColor="#ffffff"
-                    className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full"
+                {/* Show EEO intro on first load */}
+                {convStep === 0 && (
+                  <motion.div
+                    key="eeo-intro"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6"
                   >
-                    {submitting
-                      ? 'Saving...'
-                      : isEditMode
-                      ? 'Save changes \u2192'
-                      : 'See Your First Anelo Digest Preview \u2192'}
-                  </HoverButton>
-                  {isEditMode && (
+                    <div>
+                      <p className="text-xs text-indigo-400 font-mono mb-2">Almost done</p>
+                      <h2 className="text-2xl font-bold text-white leading-snug">One last thing.</h2>
+                      <p className="text-sm text-white/40 mt-2 leading-relaxed">
+                        Every job application asks these questions. Answer them once here and we&apos;ll auto-fill them for every application — forever.
+                      </p>
+                    </div>
+                    <HoverButton
+                      onClick={() => setConvStep(1)}
+                      backgroundColor="rgba(255,255,255,0.05)"
+                      glowColor="#9ca3af"
+                      textColor="#e5e7eb"
+                      hoverTextColor="#ffffff"
+                      className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+                    >
+                      Let&apos;s do it →
+                    </HoverButton>
                     <button
-                      onClick={handleStep3SaveAndExit}
-                      disabled={submitting}
-                      className="text-sm text-white/50 hover:text-white/80 transition-colors text-center disabled:opacity-40"
+                      onClick={() => { goToStep(2); setConvStep(PROFILE_QUESTIONS.length); }}
+                      className="text-sm text-white/30 hover:text-white/60 transition-colors"
                     >
-                      {submitting ? 'Saving...' : 'Save & exit'}
+                      ← Back
                     </button>
-                  )}
-                  <button
-                    onClick={() => goToStep(2)}
-                    className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
-                  >
-                    &larr; Back
-                  </button>
-                </div>
+                  </motion.div>
+                )}
+
+                {/* EEO questions Q1-Q6 (convStep 1-6) */}
+                {convStep >= 1 && convStep <= EEO_QUESTIONS.length && renderConvQuestion(
+                  EEO_QUESTIONS,
+                  convStep - 1,
+                  async () => {
+                    if (convStep < EEO_QUESTIONS.length) {
+                      setConvStep(convStep + 1);
+                    } else {
+                      // Last EEO question answered — save everything and go to step 4
+                      await handleStep3Submit();
+                    }
+                  },
+                  () => {
+                    if (convStep > 1) setConvStep(convStep - 1);
+                    else setConvStep(0);
+                  },
+                  convStep === EEO_QUESTIONS.length,
+                  convStep === EEO_QUESTIONS.length ? (submitting ? 'Saving...' : 'See my digest preview →') : 'Continue →'
+                )}
               </div>
             </motion.div>
           )}
@@ -981,14 +1149,14 @@ function OnboardingInner() {
                 </div>
 
                 <HoverButton
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/')}
                   backgroundColor="rgba(255,255,255,0.05)"
                   glowColor="#9ca3af"
                   textColor="#e5e7eb"
                   hoverTextColor="#ffffff"
                   className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full mt-2"
                 >
-                  Go to dashboard &rarr;
+                  Back to home &rarr;
                 </HoverButton>
                 {isEditMode && (
                   <a

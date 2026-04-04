@@ -70,7 +70,7 @@ export default function AlreadySignedInPage() {
                   Update my Anelo →
                 </HoverButton>
                 <a
-                  href="/dashboard"
+                  href="/"
                   className="text-sm text-white/50 hover:text-white/80 transition-colors"
                 >
                   No thanks, check my email
