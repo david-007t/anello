@@ -415,7 +415,7 @@ function OnboardingInner() {
                   >
                     {form.resume_uploaded ? (
                       <p className="text-sm text-indigo-400">
-                        Anelo sees you as a professional ready for your next chapter.
+                        ✓ Resume uploaded
                       </p>
                     ) : (
                       <p className="text-sm text-white/40">
@@ -944,7 +944,7 @@ function OnboardingInner() {
                     <span>Check your email</span>
                   </div>
                   <a
-                    href="/dashboard/preferences"
+                    href="/update-preferences"
                     className="flex items-center gap-3 text-sm text-white/60 hover:text-white/80 transition-colors"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -956,22 +956,7 @@ function OnboardingInner() {
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span>Manage your Anelo profile</span>
-                  </a>
-                  <a
-                    href="#"
-                    className="flex items-center gap-3 text-sm text-white/60 hover:text-white/80 transition-colors"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                      <path
-                        d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M16 6l-4-4-4 4M12 2v13"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <span>Invite a friend</span>
+                    <span>Update your preferences</span>
                   </a>
                 </div>
 

@@ -23,12 +23,30 @@ create table if not exists resumes (
 create table if not exists preferences (
   id uuid primary key default gen_random_uuid(),
   user_id text not null unique,
+  -- Legacy search fields
   role text,
   location text,
   min_salary text,
   company_types text,
   skills text,
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  -- Onboarding: Current Self
+  current_role_title text,
+  years_experience text,
+  key_skills text,
+  current_salary text,
+  current_location text,
+  work_authorization text,
+  disability_status text,
+  veteran_status text,
+  security_clearance text,
+  -- Onboarding: Future Self
+  role_2 text,
+  role_3 text,
+  experience_max text,
+  work_life_balance text,
+  industry_domain text,
+  values_impact text
 );
 
 -- Applications
