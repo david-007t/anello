@@ -59,7 +59,7 @@ const defaultForm: FormState = {
   ideal_job_title_3: '',
   target_salary: '',
   desired_locations: '',
-  work_life_balance: 'Prefer not to say',
+  work_life_balance: '',
   company_culture: '',
   skills_to_acquire: '',
   industry_domain: '',
@@ -312,7 +312,7 @@ function OnboardingInner() {
             ideal_job_title_3: data.role_3 ?? '',
             target_salary: data.min_salary ?? '',
             desired_locations: data.location ?? '',
-            work_life_balance: data.work_life_balance ?? 'Prefer not to say',
+            work_life_balance: data.work_life_balance ?? '',
             company_culture: data.company_types ?? '',
             skills_to_acquire: data.skills ?? '',
             industry_domain: data.industry_domain ?? '',
@@ -430,14 +430,10 @@ function OnboardingInner() {
         }),
       });
       if (!res.ok) {
-        setErrors({ submit: 'Could not save your preferences. Please try again.' });
-        setSubmitting(false);
-        return;
+        console.error('Preferences save failed:', res.status);
       }
-    } catch {
-      setErrors({ submit: 'Network error. Please check your connection and try again.' });
-      setSubmitting(false);
-      return;
+    } catch (e) {
+      console.error('Preferences network error:', e);
     }
     setSubmitting(false);
     goToStep(4);
