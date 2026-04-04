@@ -88,7 +88,10 @@ def run(on_step=None, send_digest_email: bool = True):
             .limit(1)
             .execute()
         )
-        user_row = user_res.data[0] if user_res.data else {}
+        if not user_res.data:
+            logger.warning(f"User {user_id} not found in users table — Clerk webhook may not have fired. Skipping.")
+            continue
+        user_row = user_res.data[0]
         user_email = user_row.get("email", "")
         user_name = user_row.get("first_name", "")
 
@@ -266,7 +269,7 @@ def run(on_step=None, send_digest_email: bool = True):
 
                 send_digest(user_email, user_name, digest_to_send)
             else:
-                logger.info(f"No email for user {user_id} — skipping digest send")
+                logger.warning(f"No email for user {user_id} — skipping digest send")
 
     logger.info("Pipeline run complete")
 
