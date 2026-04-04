@@ -79,7 +79,7 @@ export default function TailorButton({ jobId, jobNumber }: { jobId: string; jobN
       <button
         onClick={handleResume}
         disabled={state === "loading" || coverLoading}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+        className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition-colors whitespace-nowrap"
       >
         {tailorLabel}
       </button>

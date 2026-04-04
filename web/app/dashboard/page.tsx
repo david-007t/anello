@@ -60,14 +60,14 @@ export default async function DashboardPage() {
         <div className="bg-white border border-slate-100 rounded-2xl p-6">
           <h2 className="font-semibold text-slate-900 mb-1">Resume</h2>
           <p className="text-sm text-slate-400 mb-4">Upload your master resume to get started.</p>
-          <a href="/dashboard/resume" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <a href="/dashboard/resume" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-gray-900">
             Upload resume →
           </a>
         </div>
         <div className="bg-white border border-slate-100 rounded-2xl p-6">
           <h2 className="font-semibold text-slate-900 mb-1">Job preferences</h2>
           <p className="text-sm text-slate-400 mb-4">Tell Anelo what roles and locations to target.</p>
-          <a href="/dashboard/preferences" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <a href="/dashboard/preferences" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-gray-900">
             Set preferences →
           </a>
         </div>

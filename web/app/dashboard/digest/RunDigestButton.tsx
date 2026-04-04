@@ -99,7 +99,7 @@ export default function RunDigestButton() {
             ? "bg-slate-100 text-slate-400 cursor-not-allowed"
             : isError
             ? "bg-red-500 text-white"
-            : "bg-brand-600 hover:bg-brand-700 text-white"
+            : "bg-gray-800 hover:bg-gray-900 text-white"
         }`}
       >
         {isRunning && (

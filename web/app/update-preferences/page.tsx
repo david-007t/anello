@@ -10,12 +10,18 @@ import { HoverButton } from '@/components/ui/hover-button';
 const steps = [
   {
     number: '01',
+    name: 'Persona',
+    description: 'Your roles, skills & preferences',
+    targetStep: 2,
+  },
+  {
+    number: '02',
     name: 'Digest Preview',
     description: 'Your personalized preview',
     targetStep: 4,
   },
   {
-    number: '02',
+    number: '03',
     name: 'Confirmation',
     description: 'All set',
     targetStep: 5,

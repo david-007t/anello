@@ -97,7 +97,7 @@ export default function ResumePage() {
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
-        className="bg-white border-2 border-dashed border-slate-200 hover:border-brand-300 rounded-2xl p-12 text-center max-w-xl cursor-pointer transition"
+        className="bg-white border-2 border-dashed border-slate-200 hover:border-gray-400 rounded-2xl p-12 text-center max-w-xl cursor-pointer transition"
       >
         <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleChange} />
 
@@ -108,14 +108,14 @@ export default function ResumePage() {
         {status === "uploading" ? (
           <p className="text-sm font-medium text-slate-700">Uploading…</p>
         ) : status === "done" ? (
-          <p className="text-sm font-medium text-brand-600">Uploaded ✓</p>
+          <p className="text-sm font-medium text-gray-800">Uploaded ✓</p>
         ) : (
           <>
             <p className="text-sm font-medium text-slate-700 mb-1">
               {current ? `Current: ${current}` : "Drop your resume here"}
             </p>
             <p className="text-xs text-slate-400 mb-4">PDF or DOCX · Max 5MB</p>
-            <span className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition">
+            <span className="px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-xl transition">
               {current ? "Replace file" : "Choose file"}
             </span>
           </>
@@ -150,7 +150,7 @@ export default function ResumePage() {
                       href={r.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                      className="text-xs font-medium text-gray-800 hover:text-gray-900"
                     >
                       Download
                     </a>
@@ -190,7 +190,7 @@ export default function ResumePage() {
                 <span className="text-sm text-slate-700 truncate">{r.name}</span>
                 <div className="flex items-center gap-3 shrink-0">
                   {r.url && (
-                    <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-brand-600 hover:text-brand-700">
+                    <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-gray-800 hover:text-gray-900">
                       Download
                     </a>
                   )}

@@ -3,12 +3,12 @@
 @theme inline {
   --font-sans: var(--font-geist);
 
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-900: #1e1b4b;
+  --color-brand-50: #f9fafb;
+  --color-brand-100: #f3f4f6;
+  --color-brand-500: #374151;
+  --color-brand-600: #111827;
+  --color-brand-700: #030712;
+  --color-brand-900: #030712;
 
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;

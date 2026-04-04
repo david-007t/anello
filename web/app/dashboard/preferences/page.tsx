@@ -36,7 +36,7 @@ export default function PreferencesPage() {
     }
   }
 
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent disabled:opacity-50";
   const loading = status === "loading";
 
   return (
@@ -148,7 +148,7 @@ export default function PreferencesPage() {
         <button
           type="submit"
           disabled={loading || status === "saving"}
-          className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-xl transition disabled:opacity-50 cursor-pointer"
+          className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-semibold text-sm rounded-xl transition disabled:opacity-50 cursor-pointer"
         >
           {status === "saving" ? "Saving…" : status === "saved" ? "Saved ✓" : "Save preferences"}
         </button>

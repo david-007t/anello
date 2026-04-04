@@ -43,7 +43,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 MAX_JOBS_PER_USER = 20
 FRESHNESS_HOURS = 48
 TOP_TAILOR_COUNT = 5  # tailor resume for top N matches only
-TOP_NOTE_COUNT = 10   # generate Anelo insight note for top N matches
+TOP_NOTE_COUNT = 5    # generate Anelo insight note for top N matches
 
 
 def run(on_step=None, send_digest_email: bool = True):
