@@ -267,7 +267,7 @@ def run(on_step=None, send_digest_email: bool = True):
                     logger.warning(f"Could not query digest_jobs for email: {e} — falling back to ranked")
                     digest_to_send = ranked
 
-                send_digest(user_email, user_name, digest_to_send)
+                send_digest(user_email, user_name, digest_to_send, user_role=prefs.get("role", ""))
             else:
                 logger.warning(f"No email for user {user_id} — skipping digest send")
 

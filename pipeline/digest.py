@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 resend.api_key = os.environ.get("RESEND_API_KEY", "")
 
 
-def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
+def send_digest(user_email: str, user_name: str, jobs: list[dict], user_role: str = "") -> bool:
     """Send a digest email with top job matches to the user."""
     if not jobs:
         logger.info(f"No jobs to send for {user_email}")
@@ -66,6 +66,8 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
         more_note = f'<p style="font-size:13px;color:#94a3b8;text-align:center;margin:16px 0 0;">+ {remaining} more match{"es" if remaining != 1 else ""} found today.</p>'
 
     name = user_name or "there"
+    role_label = f" {user_role}" if user_role else ""
+    subject_line = f"Your top 5{role_label} matches today"
 
     html = f"""<!DOCTYPE html>
 <html>
@@ -75,8 +77,8 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
     <!-- Header -->
     <div style="margin-bottom:28px;">
       <p style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 10px;">anelo</p>
-      <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin:0 0 6px;letter-spacing:-0.5px;">Your top 5 matches today</h1>
-      <p style="font-size:14px;color:#64748b;margin:0;">Hi {name} — here are your top 5 picks for today.</p>
+      <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin:0 0 6px;letter-spacing:-0.5px;">{subject_line}</h1>
+      <p style="font-size:14px;color:#64748b;margin:0;">Hi {name} — here are your top 5{role_label} picks for today.</p>
     </div>
 
     <!-- Job cards -->
@@ -94,7 +96,7 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
 </body>
 </html>"""
 
-    text_parts = [f"Your top 5 job matches today\nHi {name} — here are your top 5 picks for today.\n"]
+    text_parts = [f"{subject_line}\nHi {name} — here are your top 5{role_label} picks for today.\n"]
     for i, j in enumerate(jobs[:5]):
         num = str(i + 1).zfill(2)
         text_parts.append(f"{num}. {j.get('title', '')} at {j.get('company', '')}\n   {j.get('url', '')}\n")
@@ -104,7 +106,7 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict]) -> bool:
         resend.Emails.send({
             "from": "Anelo <digest@anelo.io>",
             "to": [user_email],
-            "subject": "Your top 5 job matches today",
+            "subject": subject_line,
             "html": html,
             "text": text,
         })
