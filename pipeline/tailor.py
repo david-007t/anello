@@ -108,6 +108,41 @@ Return ONLY the JSON object, no markdown fences, no explanation."""
         raise
 
 
+def generate_note(job: dict, prefs: dict) -> str:
+    """
+    Generate a 1-2 sentence Anelo insight explaining why this job matches the user.
+    Uses claude-haiku for cost efficiency. Returns empty string on failure.
+    """
+    title = job.get("title", "")
+    company = job.get("company", "")
+    description = (job.get("description", "") or "")[:1000]
+
+    role = prefs.get("role", "")
+    skills = prefs.get("skills_to_acquire", "")
+    values = prefs.get("values_impact", "")
+    culture = prefs.get("company_culture", "")
+    domain = prefs.get("industry_domain", "")
+
+    user_context = ", ".join(p for p in [role, skills, values, culture, domain] if p)
+
+    prompt = f"""Job: {title} at {company}
+Job description excerpt: {description or "(none)"}
+Candidate profile: {user_context or "(general job seeker)"}
+
+Write 1-2 sentences explaining specifically why this job is a strong match for this candidate. Be concrete and direct — reference the company or role details. No generic phrases. No pronouns. Do not start with "This role". Return only the sentences, nothing else."""
+
+    try:
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=120,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return msg.content[0].text.strip() if msg.content else ""
+    except Exception as e:
+        logger.warning(f"Note generation failed for {title} at {company}: {e}")
+        return ""
+
+
 def tailor_resume(resume_text: str, job: dict) -> str:
     """Legacy wrapper — returns only resume_markdown for backward compat (main.py)."""
     result = tailor_job(resume_text, job)

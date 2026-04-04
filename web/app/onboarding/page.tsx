@@ -40,7 +40,6 @@ interface FormState {
 const inputClass =
   'w-full px-4 py-3 rounded-xl bg-white/[0.08] border border-white/20 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent';
 
-const stepLabels = ['Current Self', 'Future Self', 'Preview'];
 
 const defaultForm: FormState = {
   current_role_title: '',
@@ -259,7 +258,7 @@ function OnboardingInner() {
   const isEditMode = searchParams.get('mode') === 'edit';
   const stepParam = parseInt(searchParams.get('step') ?? '1', 10);
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [step, setStep] = useState<2 | 3 | 4 | 5>(2);
   const [convStep, setConvStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [digestFailed, setDigestFailed] = useState(false);
@@ -329,10 +328,11 @@ function OnboardingInner() {
       });
   }, [isEditMode, isLoaded, isSignedIn]);
 
-  // Once data is loaded, jump to the requested step
+  // Once data is loaded, jump to the requested step (step 1 no longer exists — redirect to 2)
   useEffect(() => {
     if (!dataLoaded) return;
-    const target = Math.min(Math.max(stepParam, 1), 5) as 1 | 2 | 3 | 4 | 5;
+    const raw = Math.min(Math.max(stepParam, 1), 5);
+    const target = (raw === 1 ? 2 : raw) as 2 | 3 | 4 | 5;
     setStep(target);
   }, [dataLoaded, stepParam]);
 
@@ -706,72 +706,8 @@ function OnboardingInner() {
 
         {/* Content */}
         <div className="max-w-lg mx-auto px-6 py-16">
-          {/* Step indicator — shown on steps 2-4 only */}
-          {step >= 2 && step <= 4 && (
-            <>
-              <div className="flex items-center gap-4 mb-6">
-                {stepLabels.map((label, i) => (
-                  <div key={label} className="contents">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                          step - 1 === i + 1 ? 'bg-white text-black' : 'bg-white/20 text-white/40'
-                        }`}
-                      >
-                        {String(i + 1).padStart(2, '0')}
-                      </div>
-                      <span
-                        className={`text-sm font-medium transition-colors ${
-                          step - 1 === i + 1 ? 'text-white' : 'text-white/30'
-                        }`}
-                      >
-                        {label}
-                      </span>
-                    </div>
-                    {i < stepLabels.length - 1 && <div className="flex-1 h-px bg-white/10" />}
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-white/40 mb-4">Step {step - 1} of 3</p>
-            </>
-          )}
 
-          {/* Step 1 — Welcome */}
-          {step === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            >
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 space-y-6 text-center">
-                <h1 className="text-3xl font-bold text-white">Meet Your Future Self, Powered by Anelo.</h1>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  Anelo isn&apos;t just a job search; it&apos;s your personal guide to the career you&apos;ve always envisioned.
-                </p>
-                <HoverButton
-                  onClick={() => goToStep(2)}
-                  backgroundColor="rgba(255,255,255,0.05)"
-                  glowColor="#9ca3af"
-                  textColor="#e5e7eb"
-                  hoverTextColor="#ffffff"
-                  className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full"
-                >
-                  Start Your Transformation &rarr;
-                </HoverButton>
-                {isEditMode && (
-                  <a
-                    href="/update-preferences"
-                    className="block text-sm text-white/40 hover:text-white/60 transition-colors"
-                  >
-                    &larr; Back to update menu
-                  </a>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 2 — Current Self (conversational) */}
+          {/* Step 2 — Profile questions (conversational) */}
           {step === 2 && (
             <motion.div
               key="step-2"
@@ -957,8 +893,8 @@ function OnboardingInner() {
             >
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 space-y-6">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Your Future, Delivered: First Anelo Digest Preview</h1>
-                  <p className="text-slate-400 text-sm">See how Anelo brings your Future Self to life with personalized opportunities.</p>
+                  <h1 className="text-3xl font-bold text-white mb-2">Here&apos;s what your digest looks like.</h1>
+                  <p className="text-slate-400 text-sm">A preview of the personalized job matches Anelo will send you.</p>
                 </div>
 
                 {/* Email preview card */}
@@ -970,7 +906,7 @@ function OnboardingInner() {
                   {/* Job listings */}
                   <div>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
-                      Your Future Self Likes These Jobs
+                      Your matches
                     </h3>
                     <div className="space-y-3">
                       {/* Job 1 */}
@@ -1000,7 +936,7 @@ function OnboardingInner() {
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
                         <p className="text-xs text-white/40 italic">
-                          Notion&apos;s collaborative culture is a strong fit for your desired work environment. This position offers the leadership scope your Future Self is targeting.
+                          Notion&apos;s collaborative culture is a strong fit for your desired work environment. This position offers the leadership scope you&apos;re targeting.
                         </p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
@@ -1017,7 +953,7 @@ function OnboardingInner() {
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
                         <p className="text-xs text-white/40 italic">
-                          OpenAI sits at the intersection of AI and massive impact — two themes central to your Future Self profile. A strategic move that aligns with your skills-to-acquire goal.
+                          OpenAI sits at the intersection of AI and massive impact — two themes central to your profile. A strategic move that aligns with your skills-to-acquire goal.
                         </p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;

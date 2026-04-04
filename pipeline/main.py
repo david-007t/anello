@@ -33,9 +33,9 @@ logger = logging.getLogger(__name__)
 from supabase import create_client
 from jobs import fetch_jobs
 from scorer import filter_and_rank
-from tailor import tailor_job
+from tailor import tailor_job, generate_note
 from digest import send_digest
-from notifier import notify_match, already_notified, log_notification
+from notifier import _parse_posted_at, _minutes_ago
 
 SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
@@ -43,6 +43,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 MAX_JOBS_PER_USER = 20
 FRESHNESS_HOURS = 48
 TOP_TAILOR_COUNT = 5  # tailor resume for top N matches only
+TOP_NOTE_COUNT = 10   # generate Anelo insight note for top N matches
 
 
 def run(on_step=None, send_digest_email: bool = True):
@@ -131,7 +132,6 @@ def run(on_step=None, send_digest_email: bool = True):
         logger.info(f"After dedup: {len(ranked)} unique jobs")
 
         # Freshness filter: only keep jobs posted within FRESHNESS_HOURS
-        from notifier import _parse_posted_at, _minutes_ago
         fresh = []
         for job in ranked:
             posted_at = job.get("posted_at")
@@ -180,25 +180,14 @@ def run(on_step=None, send_digest_email: bool = True):
                 except Exception as e:
                     logger.error(f"Tailoring failed for {job.get('title')} at {job.get('company')}: {e} — continuing")
 
-        # 4b. Send real-time notifications for fresh matches
-        _step(f"Sending notifications for fresh matches")
-        notified_count = 0
-        for i, job in enumerate(ranked):
-            job_url = job.get("url") or job.get("display_url", "")
-            if already_notified(db, user_id, job_url):
-                continue
-
-            # Cover letter is only available if we tailored (top N only)
-            cover_letter = job.get("tailored_cover_letter", "")
-            resume_pdf = b""
-
-            sent = notify_match(job, user_email, user_name, cover_letter, resume_pdf)
-            if sent:
-                log_notification(db, user_id, job)
-                notified_count += 1
-
-        if notified_count:
-            logger.info(f"Sent {notified_count} real-time notifications for user {user_id}")
+        # 4b. Generate Anelo insight notes for top matches
+        _step(f"Generating Anelo notes for top {min(TOP_NOTE_COUNT, len(ranked))} matches")
+        for i, job in enumerate(ranked[:TOP_NOTE_COUNT]):
+            try:
+                ranked[i]["anelo_note"] = generate_note(job, prefs)
+            except Exception as e:
+                logger.warning(f"Note generation failed for job {i}: {e}")
+                ranked[i]["anelo_note"] = ""
 
         _step(f"Saving {len(ranked)} jobs to digest")
 
@@ -254,6 +243,11 @@ def run(on_step=None, send_digest_email: bool = True):
                         .order("matched_at", desc=True)
                         .execute()
                     )
+                    # Build a note lookup from the ranked jobs (keyed by job_url)
+                    note_by_url = {
+                        (job.get("url") or job.get("display_url", "")): job.get("anelo_note", "")
+                        for job in ranked
+                    }
                     digest_to_send = [
                         {
                             "title": r.get("role", ""),
@@ -261,6 +255,8 @@ def run(on_step=None, send_digest_email: bool = True):
                             "location": r.get("location", ""),
                             "url": r.get("job_url", "#"),
                             "salary_range": r.get("salary_range", ""),
+                            "source": r.get("source", ""),
+                            "anelo_note": note_by_url.get(r.get("job_url", ""), ""),
                         }
                         for r in (digest_res.data or [])
                     ]
