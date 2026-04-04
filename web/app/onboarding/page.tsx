@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
 import { FallingPattern } from '@/components/ui/falling-pattern';
@@ -44,36 +44,91 @@ const textareaClass = `${inputClass} resize-none`;
 
 const stepLabels = ['Current Self', 'Future Self', 'Preview'];
 
-export default function OnboardingPage() {
+const defaultForm: FormState = {
+  current_role_title: '',
+  years_experience: '',
+  key_skills: '',
+  current_salary: '',
+  current_location: '',
+  work_authorization: 'Prefer not to say',
+  disability_status: 'Prefer not to say',
+  veteran_status: 'Prefer not to say',
+  security_clearance: 'None',
+  resume_uploaded: false,
+
+  ideal_job_title_1: '',
+  ideal_job_title_2: '',
+  ideal_job_title_3: '',
+  target_salary: '',
+  desired_locations: '',
+  work_life_balance: 'Prefer not to say',
+  company_culture: '',
+  skills_to_acquire: '',
+  industry_domain: '',
+  values_impact: '',
+};
+
+function OnboardingInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoaded, isSignedIn, user } = useUser();
+  const isEditMode = searchParams.get('mode') === 'edit';
+  const stepParam = parseInt(searchParams.get('step') ?? '1', 10);
+
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dataLoaded, setDataLoaded] = useState(!isEditMode);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [form, setForm] = useState<FormState>({
-    current_role_title: '',
-    years_experience: '',
-    key_skills: '',
-    current_salary: '',
-    current_location: '',
-    work_authorization: 'Prefer not to say',
-    disability_status: 'Prefer not to say',
-    veteran_status: 'Prefer not to say',
-    security_clearance: 'None',
-    resume_uploaded: false,
+  const [form, setForm] = useState<FormState>(defaultForm);
 
-    ideal_job_title_1: '',
-    ideal_job_title_2: '',
-    ideal_job_title_3: '',
-    target_salary: '',
-    desired_locations: '',
-    work_life_balance: 'Prefer not to say',
-    company_culture: '',
-    skills_to_acquire: '',
-    industry_domain: '',
-    values_impact: '',
-  });
+  // In edit mode: fetch existing prefs and pre-fill, then jump to the requested step
+  useEffect(() => {
+    if (!isEditMode) return;
+    if (!isLoaded || !isSignedIn) return;
+
+    fetch('/api/preferences')
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (data) {
+          setForm((f) => ({
+            ...f,
+            // Current Self fields
+            current_role_title: data.current_role_title ?? '',
+            years_experience: data.experience_max ?? data.years_experience ?? '',
+            key_skills: data.key_skills ?? '',
+            current_salary: data.current_salary ?? '',
+            current_location: data.current_location ?? '',
+            work_authorization: data.work_authorization ?? 'Prefer not to say',
+            disability_status: data.disability_status ?? 'Prefer not to say',
+            veteran_status: data.veteran_status ?? 'Prefer not to say',
+            security_clearance: data.security_clearance ?? 'None',
+            // Future Self fields
+            ideal_job_title_1: data.role ?? '',
+            ideal_job_title_2: data.role_2 ?? '',
+            ideal_job_title_3: data.role_3 ?? '',
+            target_salary: data.min_salary ?? '',
+            desired_locations: data.location ?? '',
+            work_life_balance: data.work_life_balance ?? 'Prefer not to say',
+            company_culture: data.company_types ?? '',
+            skills_to_acquire: data.skills ?? '',
+            industry_domain: data.industry_domain ?? '',
+            values_impact: data.values_impact ?? '',
+          }));
+        }
+        setDataLoaded(true);
+      })
+      .catch(() => {
+        setDataLoaded(true);
+      });
+  }, [isEditMode, isLoaded, isSignedIn]);
+
+  // Once data is loaded, jump to the requested step
+  useEffect(() => {
+    if (!dataLoaded) return;
+    const target = Math.min(Math.max(stepParam, 1), 5) as 1 | 2 | 3 | 4 | 5;
+    setStep(target);
+  }, [dataLoaded, stepParam]);
 
   function set(key: keyof FormState, value: string | boolean) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -102,6 +157,52 @@ export default function OnboardingPage() {
     goToStep(3);
   }
 
+  async function saveCurrentSelf(): Promise<boolean> {
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_role_title: form.current_role_title,
+          years_experience: form.years_experience,
+          key_skills: form.key_skills,
+          current_salary: form.current_salary,
+          current_location: form.current_location,
+          work_authorization: form.work_authorization,
+          disability_status: form.disability_status,
+          veteran_status: form.veteran_status,
+          security_clearance: form.security_clearance,
+        }),
+      });
+      if (!res.ok) {
+        setErrors({ submit: 'Could not save your preferences. Please try again.' });
+        setSubmitting(false);
+        return false;
+      }
+    } catch {
+      setErrors({ submit: 'Network error. Please check your connection and try again.' });
+      setSubmitting(false);
+      return false;
+    }
+    setSubmitting(false);
+    return true;
+  }
+
+  async function handleStep2SaveAndExit() {
+    const next: Record<string, string> = {};
+    if (!form.current_role_title.trim()) {
+      next.current_role_title = 'Current role title is required.';
+    }
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
+      return;
+    }
+    setErrors({});
+    const ok = await saveCurrentSelf();
+    if (ok) router.push('/dashboard');
+  }
+
   async function handleStep3Submit() {
     const next: Record<string, string> = {};
     if (!form.ideal_job_title_1.trim()) {
@@ -126,6 +227,9 @@ export default function OnboardingPage() {
           min_salary: form.target_salary,
           company_types: form.company_culture,
           skills: form.skills_to_acquire,
+          work_life_balance: form.work_life_balance,
+          industry_domain: form.industry_domain,
+          values_impact: form.values_impact,
         }),
       });
       if (!res.ok) {
@@ -139,10 +243,57 @@ export default function OnboardingPage() {
       return;
     }
     setSubmitting(false);
-    goToStep(4);
+    if (isEditMode) {
+      router.push('/dashboard');
+    } else {
+      goToStep(4);
+    }
   }
 
-  if (!isLoaded) {
+  async function handleStep3SaveAndExit() {
+    const next: Record<string, string> = {};
+    if (!form.ideal_job_title_1.trim()) {
+      next.ideal_job_title_1 = 'At least one ideal job title is required.';
+    }
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
+      return;
+    }
+    setErrors({});
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: form.ideal_job_title_1,
+          role_2: form.ideal_job_title_2,
+          role_3: form.ideal_job_title_3,
+          location: form.desired_locations,
+          experience_max: form.years_experience,
+          min_salary: form.target_salary,
+          company_types: form.company_culture,
+          skills: form.skills_to_acquire,
+          work_life_balance: form.work_life_balance,
+          industry_domain: form.industry_domain,
+          values_impact: form.values_impact,
+        }),
+      });
+      if (!res.ok) {
+        setErrors({ submit: 'Could not save your preferences. Please try again.' });
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setErrors({ submit: 'Network error. Please check your connection and try again.' });
+      setSubmitting(false);
+      return;
+    }
+    setSubmitting(false);
+    router.push('/dashboard');
+  }
+
+  if (!isLoaded || (isEditMode && !dataLoaded)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -230,6 +381,14 @@ export default function OnboardingPage() {
                 >
                   Start Your Transformation &rarr;
                 </HoverButton>
+                {isEditMode && (
+                  <a
+                    href="/update-preferences"
+                    className="block text-sm text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    &larr; Back to update menu
+                  </a>
+                )}
               </div>
             </motion.div>
           )}
@@ -410,6 +569,10 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
+                {errors.submit && (
+                  <p className="text-red-400 text-xs text-center">{errors.submit}</p>
+                )}
+
                 <div className="flex flex-col gap-3">
                   <HoverButton
                     onClick={handleStep2Next}
@@ -421,6 +584,15 @@ export default function OnboardingPage() {
                   >
                     Next: Define Your Future Self &rarr;
                   </HoverButton>
+                  {isEditMode && (
+                    <button
+                      onClick={handleStep2SaveAndExit}
+                      disabled={submitting}
+                      className="text-sm text-white/50 hover:text-white/80 transition-colors text-center disabled:opacity-40"
+                    >
+                      {submitting ? 'Saving...' : 'Save & exit'}
+                    </button>
+                  )}
                   <button
                     onClick={() => goToStep(1)}
                     className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
@@ -580,8 +752,21 @@ export default function OnboardingPage() {
                     hoverTextColor="#ffffff"
                     className="!text-base !py-3 !px-6 !rounded-xl border border-white/10 w-full"
                   >
-                    {submitting ? 'Saving...' : 'See Your First Anelo Digest Preview \u2192'}
+                    {submitting
+                      ? 'Saving...'
+                      : isEditMode
+                      ? 'Save changes \u2192'
+                      : 'See Your First Anelo Digest Preview \u2192'}
                   </HoverButton>
+                  {isEditMode && (
+                    <button
+                      onClick={handleStep3SaveAndExit}
+                      disabled={submitting}
+                      className="text-sm text-white/50 hover:text-white/80 transition-colors text-center disabled:opacity-40"
+                    >
+                      {submitting ? 'Saving...' : 'Save & exit'}
+                    </button>
+                  )}
                   <button
                     onClick={() => goToStep(2)}
                     className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
@@ -716,6 +901,14 @@ export default function OnboardingPage() {
                   >
                     &larr; Refine my profile
                   </button>
+                  {isEditMode && (
+                    <a
+                      href="/update-preferences"
+                      className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
+                    >
+                      &larr; Back to update menu
+                    </a>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -792,11 +985,33 @@ export default function OnboardingPage() {
                 >
                   Go to dashboard &rarr;
                 </HoverButton>
+                {isEditMode && (
+                  <a
+                    href="/update-preferences"
+                    className="text-sm text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    &larr; Back to update menu
+                  </a>
+                )}
               </div>
             </motion.div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <OnboardingInner />
+    </Suspense>
   );
 }
