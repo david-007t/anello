@@ -365,7 +365,7 @@ function OnboardingInner() {
     setResumeUploading(false);
   }
 
-  function goToStep(s: 1 | 2 | 3 | 4 | 5) {
+  function goToStep(s: 2 | 3 | 4 | 5) {
     setConvStep(0);
     setStep(s);
     window.scrollTo(0, 0);
@@ -776,12 +776,6 @@ function OnboardingInner() {
                       {resumeFileName ? 'Looks good →' : 'Skip for now →'}
                     </HoverButton>
 
-                    <button
-                      onClick={() => goToStep(1)}
-                      className="text-sm text-white/30 hover:text-white/60 transition-colors"
-                    >
-                      ← Back
-                    </button>
                   </motion.div>
                 )}
 
