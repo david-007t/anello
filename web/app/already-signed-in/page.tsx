@@ -1,12 +1,29 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { HoverButton } from '@/components/ui/hover-button';
 
 export default function AlreadySignedInPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    fetch('/api/preferences')
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (!data) router.replace('/onboarding');
+        else setChecking(false);
+      })
+      .catch(() => setChecking(false));
+  }, [isLoaded]);
+
+  if (checking) return null;
 
   return (
     <div className="min-h-screen text-white">

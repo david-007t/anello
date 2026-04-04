@@ -1,12 +1,11 @@
 'use client';
 
-import { useSignUp, useSignIn, useAuth } from '@clerk/nextjs';
+import { useSignIn, useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ContinueWithGoogle() {
   const { isSignedIn } = useAuth();
-  const { signUp } = useSignUp();
   const { signIn } = useSignIn();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -17,49 +16,21 @@ export default function ContinueWithGoogle() {
       router.push('/already-signed-in');
       return;
     }
-    if (!signUp || !signIn) return;
+    if (!signIn) return;
     setLoading(true);
     setError('');
 
     const origin = window.location.origin;
-    const { error: signUpError } = await signUp.sso({
+    const { error: signInError } = await signIn.sso({
       strategy: 'oauth_google',
       redirectUrl: `${origin}/sso-callback`,
-      redirectCallbackUrl: `${origin}/onboarding`,
+      redirectCallbackUrl: `${origin}/already-signed-in`,
     });
 
-    if (!signUpError) return; // redirect in progress
+    if (!signInError) return; // redirect in progress
 
-    // Check for session_exists at top-level or nested in errors array
-    const code = (signUpError as any)?.code;
-    const innerCode = (signUpError as any)?.errors?.[0]?.code;
-
-    if (code === 'session_exists' || innerCode === 'session_exists') {
-      router.push('/already-signed-in');
-      return;
-    }
-
-    // Account already exists — try sign-in
-    if (code === 'form_identifier_exists' || code === 'oauth_account_exists') {
-      const { error: signInError } = await signIn.sso({
-        strategy: 'oauth_google',
-        redirectUrl: `${origin}/sso-callback`,
-        redirectCallbackUrl: `${origin}/`,
-      });
-      if (signInError) {
-        const signInCode = (signInError as any)?.code;
-        const signInInnerCode = (signInError as any)?.errors?.[0]?.code;
-        if (signInCode === 'session_exists' || signInInnerCode === 'session_exists') {
-          router.push('/already-signed-in');
-          return;
-        }
-        setLoading(false);
-        setError('Something went wrong. Try again.');
-      }
-    } else {
-      setLoading(false);
-      setError('Something went wrong. Try again.');
-    }
+    setLoading(false);
+    setError('Something went wrong. Try again.');
   }
 
   return (

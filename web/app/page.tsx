@@ -1,7 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
+import { useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import ContinueWithGoogle from "./components/ContinueWithGoogle";
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { RadarSection } from './components/RadarSection';
@@ -27,7 +29,13 @@ const steps = [
 ];
 
 export default function HomePage() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
   const spacerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) router.push('/already-signed-in');
+  }, [isLoaded, isSignedIn]);
 
   // Track window scroll progress (0 = top, 1 = bottom of page)
   const { scrollYProgress } = useScroll();
