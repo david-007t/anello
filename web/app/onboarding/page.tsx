@@ -26,6 +26,8 @@ interface FormState {
   ideal_job_title_3: string;
   target_salary: string;
   desired_locations: string;
+  work_arrangement: string;
+  location: string;
   work_life_balance: string;
   company_culture: string;
   skills_to_acquire: string;
@@ -58,6 +60,8 @@ const defaultForm: FormState = {
   ideal_job_title_3: '',
   target_salary: '',
   desired_locations: '',
+  work_arrangement: '',
+  location: '',
   work_life_balance: '',
   company_culture: '',
   skills_to_acquire: '',
@@ -70,7 +74,7 @@ const defaultForm: FormState = {
 
 // ─── Conversational question types ───────────────────────────────────────────
 
-type QuestionType = 'single' | 'multi' | 'text' | 'roles';
+type QuestionType = 'single' | 'multi' | 'text' | 'text_input' | 'roles';
 
 interface ConvQuestion {
   id: string;
@@ -135,16 +139,23 @@ const PROFILE_QUESTIONS: ConvQuestion[] = [
     ],
   },
   {
-    id: 'location',
+    id: 'work_arrangement',
     question: 'Where do you want to work?',
     type: 'single',
-    field: 'desired_locations',
+    field: 'work_arrangement',
     options: [
       { label: 'Remote only', value: 'Remote', emoji: '🏠' },
       { label: 'Hybrid (2–3 days)', value: 'Hybrid', emoji: '🔄' },
       { label: 'On-site', value: 'On-site', emoji: '🏢' },
       { label: 'Open to anything', value: 'Flexible', emoji: '✈️' },
     ],
+  },
+  {
+    id: 'location',
+    question: 'What city are you based in?',
+    subtitle: 'e.g. New York, San Francisco, Austin',
+    type: 'text_input',
+    field: 'location',
   },
   {
     id: 'salary',
@@ -310,7 +321,9 @@ function OnboardingInner() {
             ideal_job_title_2: data.role_2 ?? '',
             ideal_job_title_3: data.role_3 ?? '',
             target_salary: data.min_salary ?? '',
-            desired_locations: data.location ?? '',
+            desired_locations: data.desired_locations ?? '',
+            work_arrangement: data.work_arrangement ?? '',
+            location: data.location ?? '',
             work_life_balance: (data.work_life_balance ?? '').split(', ').filter((v: string) => ['Compensation', 'Work-life balance', 'Growth & learning', 'Mission & impact', 'Startup energy', 'Stability', 'Remote flexibility', 'Team & culture'].includes(v)).join(', '),
             company_culture: data.company_types ?? '',
             skills_to_acquire: data.skills ?? '',
@@ -413,7 +426,8 @@ function OnboardingInner() {
           role: form.ideal_job_title_1,
           role_2: form.ideal_job_title_2,
           role_3: form.ideal_job_title_3,
-          location: form.desired_locations,
+          location: form.location,
+          work_arrangement: form.work_arrangement,
           experience_max: form.years_experience,
           min_salary: form.target_salary,
           company_types: form.company_culture,
@@ -603,6 +617,32 @@ function OnboardingInner() {
         )}
 
         {q.type === 'text' && (
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={!Array.isArray(q.field) ? (form[q.field as keyof FormState] as string) : ''}
+              onChange={(e) => {
+                if (!Array.isArray(q.field)) set(q.field as keyof FormState, e.target.value);
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && onNext()}
+              placeholder={q.placeholder}
+              className={inputClass}
+              autoFocus
+            />
+            <HoverButton
+              onClick={onNext}
+              backgroundColor="rgba(255,255,255,0.05)"
+              glowColor="#9ca3af"
+              textColor="#e5e7eb"
+              hoverTextColor="#ffffff"
+              className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+            >
+              {nextLabel}
+            </HoverButton>
+          </div>
+        )}
+
+        {q.type === 'text_input' && (
           <div className="space-y-4">
             <input
               type="text"

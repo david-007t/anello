@@ -158,7 +158,13 @@ def fetch_jobs(prefs: dict, max_results: int = 20) -> list[dict]:
         logger.warning("No roles set in preferences")
         return []
 
-    location = prefs.get("location", "")
+    location = prefs.get("location", "") or ""
+    work_arrangement = prefs.get("work_arrangement", "") or prefs.get("desired_locations", "")
+
+    # If arrangement is Remote, override location
+    if work_arrangement.lower() == "remote":
+        location = "remote"
+
     min_salary = prefs.get("min_salary")
     per_role = max(max_results // len(roles), 10)
 
