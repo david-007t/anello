@@ -444,10 +444,16 @@ function OnboardingInner() {
         }),
       });
       if (!res.ok) {
-        console.error('Preferences save failed:', res.status);
+        const errData = await res.json().catch(() => ({}));
+        setErrors({ submit: errData.error || 'Could not save your preferences. Please try again.' });
+        setSubmitting(false);
+        return;
       }
     } catch (e) {
       console.error('Preferences network error:', e);
+      setErrors({ submit: 'Network error. Please check your connection and try again.' });
+      setSubmitting(false);
+      return;
     }
     setSubmitting(false);
     goToStep(4);
