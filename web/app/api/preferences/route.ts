@@ -12,7 +12,11 @@ export async function POST(req: NextRequest) {
     .from("preferences")
     .upsert({ user_id: userId, ...body, updated_at: new Date().toISOString() });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[preferences POST] Supabase error:", JSON.stringify(error));
+    console.error("[preferences POST] SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
