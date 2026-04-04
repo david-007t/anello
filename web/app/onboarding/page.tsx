@@ -77,6 +77,7 @@ function OnboardingInner() {
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [submitting, setSubmitting] = useState(false);
+  const [digestFailed, setDigestFailed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [dataLoaded, setDataLoaded] = useState(!isEditMode);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -253,9 +254,10 @@ function OnboardingInner() {
   async function handleSendDigest() {
     setSubmitting(true);
     try {
-      await fetch('/api/run-digest', { method: 'POST' });
+      const res = await fetch('/api/run-digest', { method: 'POST' });
+      if (!res.ok) setDigestFailed(true);
     } catch {
-      // Non-blocking — even if trigger fails, advance to confirmation
+      setDigestFailed(true);
     }
     setSubmitting(false);
     goToStep(5);
@@ -941,10 +943,16 @@ function OnboardingInner() {
                   </svg>
                 </div>
                 <h1 className="text-3xl font-bold text-white">Your Anelo is Active!</h1>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  Your Anelo profile is now active! Your first personalized digest will arrive at{' '}
-                  <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span> shortly.
-                </p>
+                {digestFailed ? (
+                  <div className="w-full bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 text-sm text-yellow-300 text-left">
+                    We couldn&apos;t trigger your digest right now — we&apos;ll retry automatically. Check back soon.
+                  </div>
+                ) : (
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Your Anelo profile is now active! Your first personalized digest will arrive at{' '}
+                    <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span> shortly.
+                  </p>
+                )}
 
                 {/* Next steps */}
                 <div className="w-full space-y-3 pt-4 text-left">
