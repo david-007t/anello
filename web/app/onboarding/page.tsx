@@ -372,14 +372,8 @@ function OnboardingInner() {
   }
 
   function handleStep2Next() {
-    const next: Record<string, string> = {};
-    if (!form.current_role_title.trim()) {
-      next.current_role_title = 'Current role title is required.';
-      setErrors(next);
-      return;
-    }
     setErrors({});
-    setConvStep(0); // reset for step 3
+    setConvStep(0);
     goToStep(3);
   }
 
