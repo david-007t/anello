@@ -302,6 +302,12 @@ def run(on_step=None, send_digest_email: bool = True):
                         (job.get("url") or job.get("display_url", "")): job.get("anelo_note", "")
                         for job in ranked
                     }
+                    logger.info(f"[DEBUG] note_by_url keys: {list(note_by_url.keys())}")
+                    for r in (digest_res.data or []):
+                        db_url = r.get("job_url", "")
+                        db_note = r.get("anelo_note", "")
+                        fallback_note = note_by_url.get(db_url, "")
+                        logger.info(f"[DEBUG] job_url={db_url!r} | db_note={db_note!r} | fallback={fallback_note!r}")
                     digest_to_send = [
                         {
                             "title": r.get("role", ""),
