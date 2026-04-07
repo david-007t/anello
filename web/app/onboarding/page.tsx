@@ -969,13 +969,13 @@ function OnboardingInner() {
                       <div className="bg-white/[0.06] rounded-lg p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-white">Head of Product</p>
+                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_2 || 'your role'}</p>
                             <p className="text-xs text-white/50">Notion</p>
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
                         <p className="text-xs text-white/40 italic">
-                          Notion&apos;s collaborative culture is a strong fit for your desired work environment. This position offers the leadership scope you&apos;re targeting.
+                          Notion&apos;s collaborative culture matches your target work environment. This {form.ideal_job_title_2 || 'role'} offers the leadership scope you&apos;re targeting.
                         </p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
@@ -986,13 +986,13 @@ function OnboardingInner() {
                       <div className="bg-white/[0.06] rounded-lg p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-white">Director of Product Management</p>
+                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_3 || 'your role'}</p>
                             <p className="text-xs text-white/50">OpenAI</p>
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
                         <p className="text-xs text-white/40 italic">
-                          OpenAI sits at the intersection of AI and massive impact — two themes central to your profile. A strategic move that aligns with your skills-to-acquire goal.
+                          OpenAI&apos;s scale and AI focus align directly with your growth goals. A strong match for a {form.ideal_job_title_3 || 'your role'} targeting high-impact work.
                         </p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
