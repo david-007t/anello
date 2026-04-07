@@ -30,7 +30,7 @@ export function RadarSection() {
   );
 
   return (
-    <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
+    <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-20" style={{ pointerEvents: 'auto' }}>
       <div className="relative flex items-center justify-center z-10 mb-14">
         {/* Radar */}
         <motion.div
