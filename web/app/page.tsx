@@ -225,7 +225,7 @@ export default function HomePage() {
               style={{ opacity: hintOpacity }}
               className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
             >
-              <span className="text-xs text-white/30 tracking-widest uppercase">scroll</span>
+              <span className="text-xs text-white/40 tracking-widest uppercase">scroll</span>
               <motion.svg
                 width="16"
                 height="16"
@@ -276,9 +276,9 @@ export default function HomePage() {
               <div className="grid md:grid-cols-3 gap-10">
                 {steps.map((s) => (
                   <div key={s.step}>
-                    <span className="text-7xl font-black text-white/10 select-none leading-none block mb-4">{s.step}</span>
+                    <span className="text-7xl font-black text-white/20 select-none leading-none block mb-4">{s.step}</span>
                     <h3 className="text-lg font-semibold text-white mb-2">{s.title}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{s.description}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed">{s.description}</p>
                   </div>
                 ))}
               </div>
@@ -362,15 +362,15 @@ export default function HomePage() {
                         </div>
                         <div className="shrink-0 text-right">
                           <span className="inline-block px-2 py-0.5 rounded-full border border-white/10 text-xs text-slate-400">{job.tag}</span>
-                          <p className="text-xs text-slate-600 mt-1">{job.score}% match</p>
+                          <p className="text-xs text-slate-400 mt-1">{job.score}% match</p>
                         </div>
                       </div>
                     ))}
                   </div>
                   {/* Email footer */}
                   <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between">
-                    <span className="text-xs text-slate-600">anelo.io</span>
-                    <span className="text-xs text-slate-600">Unsubscribe · Manage preferences</span>
+                    <span className="text-xs text-slate-400">anelo.io</span>
+                    <span className="text-xs text-slate-400">Unsubscribe · Manage preferences</span>
                   </div>
                 </div>
               </div>
@@ -404,20 +404,19 @@ export default function HomePage() {
           </motion.div>
 
         </div>
-      </div>
 
-      {/* ── Footer — outside the scroll-jacked area, always at bottom ─────── */}
-      <footer className="relative z-10 border-t border-white/10 py-8 bg-black/60 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm font-black text-white">anelo</span>
-          <div className="flex items-center gap-6 text-xs text-slate-500">
-            <a href="/privacy" className="hover:text-white/70 transition-colors">Privacy Policy</a>
-            <a href="/terms" className="hover:text-white/70 transition-colors">Terms of Service</a>
-            <a href="mailto:hello@anelo.io" className="hover:text-white/70 transition-colors">hello@anelo.io</a>
+        {/* ── Footer — inside spacer so it appears immediately after last scene ── */}
+        <footer className="absolute bottom-0 left-0 right-0 z-10 border-t border-white/10 py-8 bg-black/60 backdrop-blur-md">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-sm font-black text-white">anelo</span>
+            <div className="flex items-center gap-6 text-xs text-slate-500">
+              <a href="/privacy" className="hover:text-white/70 transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-white/70 transition-colors">Terms of Service</a>
+            </div>
+            <p className="text-xs text-slate-500">© {new Date().getFullYear()} Anelo. All rights reserved.</p>
           </div>
-          <p className="text-xs text-slate-500">© {new Date().getFullYear()} Anelo. All rights reserved.</p>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }

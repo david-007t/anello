@@ -38,7 +38,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider afterSignOutUrl="/">
+    <ClerkProvider
+      afterSignOutUrl="/"
+      appearance={{
+        elements: {
+          formFieldRow: "hidden",
+          formButtonPrimary: "hidden",
+          dividerRow: "hidden",
+          footerAction: "hidden",
+          identifierInput: "hidden",
+          formField: "hidden",
+        },
+      }}
+    >
       <html lang="en" className={`${geist.variable} scroll-smooth`}>
         <body className="min-h-full antialiased">
           {children}

@@ -58,7 +58,7 @@ export default function ContinueWithGoogle() {
         <span>{loading ? 'Redirecting\u2026' : 'Continue with Google'}</span>
       </button>
       {error && <p className="text-xs text-red-400">{error}</p>}
-      <p className="text-xs text-white/30">Free to try · No credit card required</p>
+      <p className="text-xs text-white/50">Free to try · No credit card required</p>
     </div>
   );
 }
