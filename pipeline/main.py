@@ -260,10 +260,21 @@ def run(on_step=None, send_digest_email: bool = True):
             })
 
         # Cross-run dedup: skip jobs already in digest_jobs for this user
+        # but always update anelo_note for existing jobs so stale notes are replaced
         try:
             existing_res = db.table("digest_jobs").select("job_url").eq("user_id", user_id).execute()
             existing_urls = {r["job_url"] for r in (existing_res.data or []) if r.get("job_url")}
-            rows = [r for r in rows if r.get("job_url") and r["job_url"] not in existing_urls]
+            new_rows = [r for r in rows if r.get("job_url") and r["job_url"] not in existing_urls]
+            # Update anelo_note for jobs already in DB so fresh notes always win
+            for r in rows:
+                url = r.get("job_url")
+                note = r.get("anelo_note", "")
+                if url and url in existing_urls and note:
+                    try:
+                        db.table("digest_jobs").update({"anelo_note": note}).eq("user_id", user_id).eq("job_url", url).execute()
+                    except Exception as ue:
+                        logger.warning(f"Could not update anelo_note for {url}: {ue}")
+            rows = new_rows
         except Exception as e:
             logger.warning(f"Could not fetch existing jobs for dedup: {e}")
 
