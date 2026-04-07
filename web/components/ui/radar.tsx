@@ -103,17 +103,12 @@ export const IconContainer = ({
   delay?: number;
   visible?: boolean;
 }) => {
-  const [showLabel, setShowLabel] = useState(false);
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={visible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.4, delay: delay ?? 0 }}
-      className="relative z-50 flex flex-col items-center justify-center"
-      onMouseEnter={() => setShowLabel(true)}
-      onMouseLeave={() => setShowLabel(false)}
-      onClick={() => setShowLabel(v => !v)}
+      className="group relative z-50 flex flex-col items-center justify-center"
     >
       <div className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-inner backdrop-blur-sm">
         {icon || (
@@ -123,11 +118,7 @@ export const IconContainer = ({
         )}
       </div>
       {/* Tooltip label */}
-      <div
-        className={`pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-xs font-medium text-white/60 transition-all duration-150 ${
-          showLabel ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
-        }`}
-      >
+      <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-xs font-medium text-white/60 opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
         {text}
       </div>
     </motion.div>

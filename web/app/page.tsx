@@ -1,9 +1,7 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
-import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 import ContinueWithGoogle from "./components/ContinueWithGoogle";
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { RadarSection } from './components/RadarSection';
@@ -123,14 +121,8 @@ function FAQItem({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const router = useRouter();
   const spacerRef = useRef<HTMLDivElement>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) router.push('/already-signed-in');
-  }, [isLoaded, isSignedIn]);
 
   // Track scroll progress relative to the spacer element so that content
   // outside the spacer (footer) doesn't affect animation keyframe positions.
@@ -148,6 +140,7 @@ export default function HomePage() {
   // Scene 1: Radar — visible at start, fades out by 0.165
   const radarOpacity = useTransform(scrollYProgress, [0, 0.10, 0.165, 1.0], [1, 1, 0, 0]);
   const radarVisibility = useTransform(radarOpacity, (v) => (v <= 0 ? 'hidden' : 'visible'));
+  const radarPointerEvents = useTransform(radarOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
 
   // Scene 2: Hero — fades in after radar, fades out before How It Works
   const heroOpacity = useTransform(scrollYProgress, [0.165, 0.21, 0.295, 0.33], [0, 1, 1, 0]);
@@ -216,7 +209,7 @@ export default function HomePage() {
 
           {/* Scene 1: Radar */}
           <motion.div
-            style={{ opacity: radarOpacity, visibility: radarVisibility, pointerEvents: 'none' }}
+            style={{ opacity: radarOpacity, visibility: radarVisibility, pointerEvents: radarPointerEvents }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <RadarSection />
