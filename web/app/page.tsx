@@ -96,7 +96,7 @@ function FAQItem({
     <div className="border-b border-white/10">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-3.5 text-left gap-4 cursor-pointer"
+        className="w-full flex items-center justify-between py-3 text-left gap-4 cursor-pointer"
       >
         <span className="text-sm font-medium text-white">{q}</span>
         <span
@@ -336,9 +336,9 @@ export default function HomePage() {
           >
             <div className="max-w-4xl mx-auto px-6 w-full">
               {/* group: hovering anywhere in this container reveals the card */}
-              <div className="group text-center">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Your inbox, upgraded</h2>
-                <p className="text-slate-400 text-base max-w-xl mx-auto mb-10">
+              <div className="group">
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 text-center">Your inbox, upgraded</h2>
+                <p className="text-slate-400 text-base max-w-xl mx-auto mb-10 text-center">
                   Every morning you get a short, scannable email with the roles most likely to fit — ranked by relevance, not recency.
                 </p>
                 {/* Card: hidden by default, fades in on hover */}
@@ -394,7 +394,7 @@ export default function HomePage() {
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <div className="max-w-2xl mx-auto px-6 w-full">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+              <h2 className="text-2xl font-bold text-white mb-6 text-center">
                 Frequently asked
               </h2>
               <div>
@@ -407,15 +407,6 @@ export default function HomePage() {
                     onToggle={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
                   />
                 ))}
-              </div>
-              <div className="mt-8 text-center">
-                <p className="text-slate-500 text-sm mb-3">Still have questions?</p>
-                <a
-                  href="mailto:hello@anelo.io"
-                  className="text-sm text-white/60 hover:text-white transition-colors underline underline-offset-4"
-                >
-                  hello@anelo.io
-                </a>
               </div>
             </div>
           </motion.div>
