@@ -114,7 +114,7 @@ def _send_email(
 
     # Build HTML body
     salary_html = f"<p style='color:#64748b;'>Salary: {salary}</p>" if salary else ""
-    source_html = f"<span style='display:inline-block;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:0.05em;'>{source}</span>" if source else ""
+    source_html = ""
     cover_html = ""
     if cover_letter:
         escaped = cover_letter.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

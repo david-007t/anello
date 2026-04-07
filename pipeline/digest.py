@@ -34,11 +34,6 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict], user_role: st
             meta_parts.append(salary)
         meta = " · ".join(p for p in meta_parts if p)
 
-        source = j.get("source", "")
-        source_badge = ""
-        if source:
-            source_badge = f'<span style="display:inline-block;background:#f1f5f9;color:#94a3b8;font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;">{source}</span>'
-
         num = str(i + 1).zfill(2)
 
         job_cards += f"""
@@ -50,7 +45,7 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict], user_role: st
               </td>
               <td style="vertical-align:top;">
                 <div style="margin-bottom:4px;">
-                  <a href="{j.get('url', '#')}" style="font-size:14px;font-weight:700;color:#0f172a;text-decoration:none;">{j.get('title', '')}</a>{source_badge}
+                  <a href="{j.get('url', '#')}" style="font-size:14px;font-weight:700;color:#0f172a;text-decoration:none;">{j.get('title', '')}</a>
                 </div>
                 <div style="font-size:13px;color:#64748b;margin-bottom:10px;">{meta}</div>
                 {f'<div style="font-size:13px;color:#64748b;font-style:italic;margin-bottom:12px;line-height:1.5;">{j["anelo_note"]}</div>' if j.get("anelo_note") else '<div style="margin-bottom:12px;"></div>'}
