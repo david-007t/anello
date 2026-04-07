@@ -279,6 +279,8 @@ function OnboardingInner() {
   const [resumeFileName, setResumeFileName] = useState<string | null>(null);
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeError, setResumeError] = useState('');
+  const [blurbs, setBlurbs] = useState({ blurb1: '', blurb2: '', blurb3: '' });
+  const [blurbsLoading, setBlurbsLoading] = useState(false);
 
   // Always: fetch existing resume so returning users see it pre-loaded
   useEffect(() => {
@@ -347,6 +349,28 @@ function OnboardingInner() {
     const target = (raw === 1 ? 2 : raw) as 2 | 3 | 4 | 5;
     setStep(target);
   }, [dataLoaded, stepParam]);
+
+  useEffect(() => {
+    if (step !== 4 || !form.ideal_job_title_1) return;
+    setBlurbsLoading(true);
+    fetch('/api/onboarding/preview-blurbs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role1: form.ideal_job_title_1,
+        role2: form.ideal_job_title_2 || form.ideal_job_title_1,
+        role3: form.ideal_job_title_3 || form.ideal_job_title_1,
+        values: form.values_impact,
+        culture: form.company_culture,
+        domain: form.industry_domain,
+        skills: form.skills_to_acquire,
+      }),
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setBlurbs(data); })
+      .catch(() => {})
+      .finally(() => setBlurbsLoading(false));
+  }, [step]);
 
   function set(key: keyof FormState, value: string | boolean) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -957,9 +981,11 @@ function OnboardingInner() {
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">Remote</span>
                         </div>
-                        <p className="text-xs text-white/40 italic">
-                          This role aligns with your ambition to lead product at a high-growth fintech. Stripe&apos;s global impact matches your values around meaningful work.
-                        </p>
+                        {blurbsLoading ? (
+                          <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
+                        ) : (
+                          <p className="text-xs text-white/40 italic">{blurbs.blurb1}</p>
+                        )}
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -969,14 +995,16 @@ function OnboardingInner() {
                       <div className="bg-white/[0.06] rounded-lg p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_2 || 'your role'}</p>
+                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_2 || form.ideal_job_title_1 || 'your role'}</p>
                             <p className="text-xs text-white/50">Notion</p>
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
-                        <p className="text-xs text-white/40 italic">
-                          Notion&apos;s collaborative culture matches your target work environment. This {form.ideal_job_title_2 || 'role'} offers the leadership scope you&apos;re targeting.
-                        </p>
+                        {blurbsLoading ? (
+                          <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
+                        ) : (
+                          <p className="text-xs text-white/40 italic">{blurbs.blurb2}</p>
+                        )}
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -986,14 +1014,16 @@ function OnboardingInner() {
                       <div className="bg-white/[0.06] rounded-lg p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_3 || 'your role'}</p>
+                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_3 || form.ideal_job_title_1 || 'your role'}</p>
                             <p className="text-xs text-white/50">OpenAI</p>
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
-                        <p className="text-xs text-white/40 italic">
-                          OpenAI&apos;s scale and AI focus align directly with your growth goals. A strong match for a {form.ideal_job_title_3 || 'your role'} targeting high-impact work.
-                        </p>
+                        {blurbsLoading ? (
+                          <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
+                        ) : (
+                          <p className="text-xs text-white/40 italic">{blurbs.blurb3}</p>
+                        )}
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>

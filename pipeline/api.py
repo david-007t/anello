@@ -468,6 +468,48 @@ def run_pipeline():
     return {"status": "started"}
 
 
+class PreviewBlurbsRequest(BaseModel):
+    role1: str
+    role2: str = ""
+    role3: str = ""
+    values: str = ""
+    culture: str = ""
+    domain: str = ""
+    skills: str = ""
+
+
+@app.post("/preview-blurbs")
+def preview_blurbs_endpoint(req: PreviewBlurbsRequest):
+    """Generate AI blurbs for the onboarding digest preview cards."""
+    role1 = req.role1
+    role2 = req.role2 or role1
+    role3 = req.role3 or role1
+
+    prefs = {
+        "role": role1,
+        "values_impact": req.values,
+        "company_culture": req.culture,
+        "industry_domain": req.domain,
+        "skills_to_acquire": req.skills,
+    }
+
+    demo_jobs = [
+        {"title": role1, "company": "Stripe", "description": f"Global payments infrastructure company hiring for {role1} roles."},
+        {"title": role2, "company": "Notion", "description": f"Productivity and collaboration platform hiring for {role2} roles."},
+        {"title": role3, "company": "OpenAI", "description": f"AI research and deployment company hiring for {role3} roles."},
+    ]
+
+    result = {}
+    for i, job in enumerate(demo_jobs, 1):
+        try:
+            result[f"blurb{i}"] = generate_note(job, prefs)
+        except Exception as e:
+            logger.warning(f"Preview blurb {i} failed: {e}")
+            result[f"blurb{i}"] = ""
+
+    return result
+
+
 class ValidateRequest(BaseModel):
     job_id: str
     user_id: str
