@@ -286,7 +286,7 @@ def run(on_step=None, send_digest_email: bool = True):
                         .order("matched_at", desc=True)
                         .execute()
                     )
-                    # note_by_url: fallback for rows inserted before anelo_note column existed
+                    # note_by_url: current-run notes take priority over stale DB values
                     note_by_url = {
                         (job.get("url") or job.get("display_url", "")): job.get("anelo_note", "")
                         for job in ranked
@@ -299,7 +299,7 @@ def run(on_step=None, send_digest_email: bool = True):
                             "url": r.get("job_url", "#"),
                             "salary_range": r.get("salary_range", ""),
                             "source": r.get("source", ""),
-                            "anelo_note": r.get("anelo_note") or note_by_url.get(r.get("job_url", ""), ""),
+                            "anelo_note": note_by_url.get(r.get("job_url", ""), "") or r.get("anelo_note", ""),
                         }
                         for r in (digest_res.data or [])
                     ]
