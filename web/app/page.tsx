@@ -300,14 +300,15 @@ export default function HomePage() {
                   {/* Job matches */}
                   <div className="divide-y divide-white/5">
                     {[
-                      { title: "Senior Product Designer", company: "Linear", location: "Remote · US", score: 97, tag: "Top match" },
-                      { title: "Product Designer", company: "Notion", location: "San Francisco, CA", score: 91, tag: "Strong fit" },
-                      { title: "Design Systems Designer", company: "Figma", location: "Remote · US", score: 84, tag: "Good fit" },
+                      { title: "Senior Product Designer", company: "Linear", location: "Remote · US", score: 97, tag: "Top match", blurb: "Linear's design-led culture matches your approach perfectly. Your systems background makes you a strong fit for their core product team." },
+                      { title: "Product Designer", company: "Notion", location: "San Francisco, CA", score: 91, tag: "Strong fit", blurb: "Notion's collaborative canvas is right in your wheelhouse. Your experience shipping cross-platform features aligns with their current roadmap." },
+                      { title: "Design Systems Designer", company: "Figma", location: "Remote · US", score: 84, tag: "Good fit", blurb: "Figma is rebuilding their design system from the ground up — your tokens and component work translates directly to what they need." },
                     ].map((job) => (
                       <div key={job.title} className="px-6 py-4 flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-white">{job.title}</p>
                           <p className="text-xs text-slate-400 mt-0.5">{job.company} · {job.location}</p>
+                          <p className="text-xs text-slate-500 italic mt-1.5">{job.blurb}</p>
                         </div>
                         <div className="shrink-0 text-right">
                           <span className="inline-block px-2 py-0.5 rounded-full border border-white/10 text-xs text-slate-400">{job.tag}</span>
