@@ -94,25 +94,19 @@ export const Radar = ({ className }: { className?: string }) => {
 
 export const IconContainer = ({
   icon,
-  text,
   delay,
   visible = true,
 }: {
   icon?: React.ReactNode;
-  text?: string;
   delay?: number;
   visible?: boolean;
 }) => {
-  const [hovered, setHovered] = useState(false);
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={visible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.4, delay: delay ?? 0 }}
       className="relative z-50 flex flex-col items-center justify-center"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <div className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-inner backdrop-blur-sm">
         {icon || (
@@ -120,17 +114,6 @@ export const IconContainer = ({
             <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
           </svg>
         )}
-      </div>
-      {/* Tooltip label */}
-      <div
-        style={{
-          opacity: hovered ? 1 : 0,
-          transform: hovered ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(-4px)',
-          transition: 'all 150ms ease',
-        }}
-        className="absolute top-full mt-1 left-1/2 whitespace-nowrap text-center text-xs font-medium text-white/60"
-      >
-        {text}
       </div>
     </motion.div>
   );
