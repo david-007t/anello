@@ -5,7 +5,6 @@ import { useScroll, useTransform, motion } from 'framer-motion';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import ContinueWithGoogle from "./components/ContinueWithGoogle";
-import WaitlistForm from "./components/WaitlistForm";
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { RadarSection } from './components/RadarSection';
 import { HoverButton } from '@/components/ui/hover-button';
@@ -262,16 +261,6 @@ export default function HomePage() {
             >
               See how it works ↓
             </button>
-            {/* Email capture — alternative for users not ready for Google OAuth.
-                Hidden on very small viewports to prevent overflow in the sticky container. */}
-            <div className="hidden sm:block mt-8 w-full max-w-md">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-xs text-white/30 uppercase tracking-widest">or join the waitlist</span>
-                <div className="flex-1 h-px bg-white/10" />
-              </div>
-              <WaitlistForm />
-            </div>
           </motion.div>
 
           {/* Scene 3: How It Works */}
