@@ -144,6 +144,7 @@ export default function HomePage() {
 
   // Scene 2: Hero — fades in after radar, fades out before How It Works
   const heroOpacity = useTransform(scrollYProgress, [0.165, 0.21, 0.295, 0.33], [0, 1, 1, 0]);
+  const heroPointerEvents = useTransform(heroOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
 
   // Scene 3: How It Works — now has a fade-out so Scene 4 can follow
   const howOpacity = useTransform(scrollYProgress, [0.33, 0.37, 0.455, 0.50], [0, 1, 1, 0]);
@@ -234,7 +235,7 @@ export default function HomePage() {
 
           {/* Scene 2: Hero */}
           <motion.div
-            style={{ opacity: heroOpacity }}
+            style={{ opacity: heroOpacity, pointerEvents: heroPointerEvents }}
             className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pt-16"
           >
             <GooeyText
