@@ -131,9 +131,6 @@ export default function HomePage() {
   // Scene 3: How It Works — now has a fade-out so Scene 4 can follow
   const howOpacity = useTransform(scrollYProgress, [0.33, 0.37, 0.455, 0.50], [0, 1, 1, 0]);
 
-  // Scene 4: Stats + Testimonials
-  const statsOpacity = useTransform(scrollYProgress, [0.50, 0.54, 0.625, 0.665], [0, 1, 1, 0]);
-
   // Scene 5: Inbox Preview (hover-reveal card inside)
   const inboxOpacity = useTransform(scrollYProgress, [0.665, 0.705, 0.79, 0.83], [0, 1, 1, 0]);
   const inboxPointerEvents = useTransform(inboxOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
@@ -261,24 +258,6 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Scene 4: Stats + Testimonials */}
-          <motion.div
-            style={{ opacity: statsOpacity, pointerEvents: 'none' }}
-            className="absolute inset-0 flex items-center justify-center pt-16"
-          >
-            <div className="max-w-6xl mx-auto px-6 w-full">
-              {/* Stat block */}
-              <div className="grid grid-cols-3 gap-6 mb-16 text-center">
-                {stats.map((s) => (
-                  <div key={s.label}>
-                    <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
-                    <p className="text-sm text-slate-500">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
           {/* Scene 5: Inbox Preview
               The email card is hidden by default and revealed on hover via CSS transitions.
               No JS needed — opacity + translateY with group-hover. */}
@@ -287,11 +266,20 @@ export default function HomePage() {
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <div className="max-w-4xl mx-auto px-6 w-full">
+              {/* Stat block */}
+              <div className="grid grid-cols-3 gap-6 mb-12 text-center">
+                {stats.map((s) => (
+                  <div key={s.label}>
+                    <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
+                    <p className="text-sm text-slate-500">{s.label}</p>
+                  </div>
+                ))}
+              </div>
               {/* group: hovering anywhere in this container reveals the card */}
               <div className="group">
                 <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 text-center">Your inbox, upgraded</h2>
                 <p className="text-slate-400 text-base max-w-xl mx-auto mb-10 text-center">
-                  Every morning you get a short, scannable email with the roles most likely to fit — ranked by relevance, not recency.
+                  Every morning you get a short, scannable email with the roles most likely to fit — ranked by relevance and recency.
                 </p>
                 {/* Card: hidden by default, fades in on hover */}
                 {/* TODO: Replace this mock with a real screenshot of the daily digest email */}
