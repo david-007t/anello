@@ -981,11 +981,7 @@ function OnboardingInner() {
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">Remote</span>
                         </div>
-                        {blurbsLoading ? (
-                          <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
-                        ) : (
-                          <p className="text-xs text-white/40 italic">{blurbs.blurb1}</p>
-                        )}
+                        <p className="text-xs text-white/40 italic">Stripe&apos;s scale and engineering culture make this a strong fit for your growth goals. A high-impact role at a company that moves fast.</p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -1000,11 +996,7 @@ function OnboardingInner() {
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
-                        {blurbsLoading ? (
-                          <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
-                        ) : (
-                          <p className="text-xs text-white/40 italic">{blurbs.blurb2}</p>
-                        )}
+                        <p className="text-xs text-white/40 italic">Notion&apos;s product-led culture aligns well with your target environment. This role offers real ownership from day one.</p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -1019,11 +1011,7 @@ function OnboardingInner() {
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
                         </div>
-                        {blurbsLoading ? (
-                          <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
-                        ) : (
-                          <p className="text-xs text-white/40 italic">{blurbs.blurb3}</p>
-                        )}
+                        <p className="text-xs text-white/40 italic">OpenAI sits at the frontier of what you&apos;re building toward. A strong match for someone ready for high-stakes, high-impact work.</p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
