@@ -86,14 +86,16 @@ function FAQItem({
   a,
   open,
   onToggle,
+  isLast,
 }: {
   q: string;
   a: string;
   open: boolean;
   onToggle: () => void;
+  isLast?: boolean;
 }) {
   return (
-    <div className="border-b border-white/10">
+    <div className={isLast ? undefined : "border-b border-white/10"}>
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between py-3 text-left gap-4 cursor-pointer"
@@ -397,7 +399,7 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold text-white mb-6 text-center">
                 Frequently asked
               </h2>
-              <div>
+              <div className="border border-white/10 bg-white/5 backdrop-blur-sm rounded-2xl px-6 py-2 max-w-2xl mx-auto">
                 {faqs.map((f, i) => (
                   <FAQItem
                     key={f.q}
@@ -405,6 +407,7 @@ export default function HomePage() {
                     a={f.a}
                     open={openFaqIndex === i}
                     onToggle={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                    isLast={i === faqs.length - 1}
                   />
                 ))}
               </div>
