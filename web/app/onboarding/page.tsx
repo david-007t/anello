@@ -1095,6 +1095,7 @@ function OnboardingInner() {
                     </svg>
                     <span>Check your email</span>
                   </div>
+                  <p className="text-xs text-white/30 pl-[30px]">Don&apos;t see it? Check your spam folder.</p>
                   <a
                     href="/update-preferences"
                     className="flex items-center gap-3 text-sm text-white/60 hover:text-white/80 transition-colors"

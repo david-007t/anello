@@ -35,24 +35,6 @@ const stats = [
   { value: "Free", label: "During early access" },
 ];
 
-const testimonials = [
-  {
-    quote: "I stopped refreshing LinkedIn every hour. Anelo just sends me the good stuff.",
-    name: "Jordan M.",
-    role: "Product Designer",
-  },
-  {
-    quote: "Got a recruiter call within 48 hours of signing up. The matching is surprisingly accurate.",
-    name: "Priya K.",
-    role: "Software Engineer",
-  },
-  {
-    quote: "Finally a job search tool that doesn't make me feel like I'm doing it wrong.",
-    name: "Marcus T.",
-    role: "Marketing Manager",
-  },
-];
-
 // ── FAQ ───────────────────────────────────────────────────────────────────────
 
 const faqs = [
@@ -291,21 +273,6 @@ export default function HomePage() {
                   <div key={s.label}>
                     <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
                     <p className="text-sm text-slate-500">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-              {/* Testimonial cards */}
-              <div className="grid sm:grid-cols-3 gap-6">
-                {testimonials.map((t) => (
-                  <div
-                    key={t.name}
-                    className="border border-white/10 bg-white/5 backdrop-blur-sm rounded-2xl p-6"
-                  >
-                    <p className="text-sm text-slate-300 leading-relaxed mb-5">"{t.quote}"</p>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{t.name}</p>
-                      <p className="text-xs text-slate-500">{t.role}</p>
-                    </div>
                   </div>
                 ))}
               </div>
