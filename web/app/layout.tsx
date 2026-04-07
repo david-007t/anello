@@ -11,12 +11,15 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Anelo — Your jobs come to you.",
   description:
-    "Anelo is an AI job agent that finds, tailors your resume, and applies to jobs automatically. Set your preferences and let Anelo handle the grind.",
+    "Anelo is an AI job agent that scans 8+ job boards daily, scores the best matches for your profile, and delivers a curated digest to your inbox every morning. Free to try.",
   metadataBase: new URL("https://anelo.io"),
+  alternates: {
+    canonical: "https://anelo.io",
+  },
   openGraph: {
     title: "Anelo — Your jobs come to you.",
     description:
-      "AI-powered job agent that finds, tailors, and applies to jobs for you.",
+      "AI-powered daily job digest. Anelo scans top job boards, scores matches for your profile, and sends you the best roles every morning.",
     url: "https://anelo.io",
     siteName: "Anelo",
     type: "website",
@@ -24,7 +27,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Anelo — Your jobs come to you.",
-    description: "AI-powered job agent that applies to jobs on your behalf.",
+    description:
+      "Wake up to a curated digest of your best-matched jobs — powered by AI. Free during early access.",
   },
 };
 
