@@ -62,7 +62,8 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict], user_role: st
 
     name = user_name or "there"
     role_label = f" {user_role}" if user_role else ""
-    subject_line = f"Your top 5{role_label} matches today"
+    shown = min(5, len(jobs))
+    subject_line = f"Your top {shown}{role_label} matches today"
 
     html = f"""<!DOCTYPE html>
 <html>
@@ -73,7 +74,7 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict], user_role: st
     <div style="margin-bottom:28px;">
       <p style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 10px;">anelo</p>
       <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin:0 0 6px;letter-spacing:-0.5px;">{subject_line}</h1>
-      <p style="font-size:14px;color:#64748b;margin:0;">Hi {name} — here are your top 5{role_label} picks for today.</p>
+      <p style="font-size:14px;color:#64748b;margin:0;">Hi {name} — here are your top {shown}{role_label} picks for today.</p>
     </div>
 
     <!-- Job cards -->
@@ -91,7 +92,7 @@ def send_digest(user_email: str, user_name: str, jobs: list[dict], user_role: st
 </body>
 </html>"""
 
-    text_parts = [f"{subject_line}\nHi {name} — here are your top 5{role_label} picks for today.\n"]
+    text_parts = [f"{subject_line}\nHi {name} — here are your top {shown}{role_label} picks for today.\n"]
     for i, j in enumerate(jobs[:5]):
         num = str(i + 1).zfill(2)
         text_parts.append(f"{num}. {j.get('title', '')} at {j.get('company', '')}\n   {j.get('url', '')}\n")

@@ -129,7 +129,7 @@ def generate_note(job: dict, prefs: dict) -> str:
 Job description excerpt: {description or "(none)"}
 Candidate profile: {user_context or "(general job seeker)"}
 
-Write exactly 2 sentences explaining specifically why this job is a strong match for this candidate. Be concrete and direct — reference the company or role details. No generic phrases. No pronouns. Do not start with "This role". Return only the 2 sentences, nothing else."""
+Write exactly 2 short sentences (30–40 words total) explaining specifically why this job is a strong match. Use "your" or "our" — never refer to the candidate in third person. Be concrete and direct — reference the company or role details. No generic phrases. Do not start with "This role". Return only the 2 sentences, nothing else."""
 
     try:
         msg = client.messages.create(
