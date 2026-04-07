@@ -145,7 +145,6 @@ const PROFILE_QUESTIONS: ConvQuestion[] = [
     field: 'work_arrangement',
     options: [
       { label: 'Remote only', value: 'Remote', emoji: '🏠' },
-      { label: 'Hybrid (2–3 days)', value: 'Hybrid', emoji: '🔄' },
       { label: 'On-site', value: 'On-site', emoji: '🏢' },
       { label: 'Open to anything', value: 'Flexible', emoji: '✈️' },
     ],
