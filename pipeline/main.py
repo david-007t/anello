@@ -310,7 +310,7 @@ def run(on_step=None, send_digest_email: bool = True):
                             "url": r.get("job_url", "#"),
                             "salary_range": r.get("salary_range", ""),
                             "source": r.get("source", ""),
-                            "anelo_note": note_by_url.get(r.get("job_url", ""), "") or r.get("anelo_note", ""),
+                            "anelo_note": r.get("anelo_note", "") or note_by_url.get(r.get("job_url", ""), ""),
                         }
                         for r in (digest_res.data or [])
                     ]
