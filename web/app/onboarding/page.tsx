@@ -952,7 +952,7 @@ function OnboardingInner() {
                       <div className="bg-white/[0.06] rounded-lg p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-white">Senior Product Manager</p>
+                            <p className="text-sm font-semibold text-white">{form.ideal_job_title_1 || 'your role'}</p>
                             <p className="text-xs text-white/50">Stripe</p>
                           </div>
                           <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">Remote</span>
