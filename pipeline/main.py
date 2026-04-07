@@ -16,10 +16,12 @@ Env vars required:
   ADZUNA_API_KEY
   ANTHROPIC_API_KEY
   RESEND_API_KEY
+  CLERK_SECRET_KEY  (optional — enables Clerk API fallback when user.created webhook missed)
 """
 
 import os
 import logging
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,11 +41,44 @@ from notifier import _parse_posted_at, _minutes_ago
 
 SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
 
 MAX_JOBS_PER_USER = 20
 FRESHNESS_HOURS = 48
 TOP_TAILOR_COUNT = 5  # tailor resume for top N matches only
 TOP_NOTE_COUNT = 5    # generate Anelo insight note for top N matches
+
+
+def _backfill_user_from_clerk(db, user_id: str) -> dict | None:
+    """Fetch user from Clerk API and upsert into users table. Returns user row dict or None."""
+    if not CLERK_SECRET_KEY:
+        logger.warning("CLERK_SECRET_KEY not set — cannot fetch user from Clerk.")
+        return None
+    try:
+        resp = requests.get(
+            f"https://api.clerk.com/v1/users/{user_id}",
+            headers={"Authorization": f"Bearer {CLERK_SECRET_KEY}"},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            logger.warning(f"Clerk API returned {resp.status_code} for user {user_id}")
+            return None
+        data = resp.json()
+        email_addresses = data.get("email_addresses") or []
+        email = email_addresses[0].get("email_address", "") if email_addresses else ""
+        first_name = data.get("first_name") or ""
+        last_name = data.get("last_name") or ""
+        db.table("users").upsert({
+            "id": user_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+        }).execute()
+        logger.info(f"Backfilled user {user_id} ({email}) from Clerk into users table.")
+        return {"email": email, "first_name": first_name}
+    except Exception as e:
+        logger.warning(f"Clerk API fallback failed for {user_id}: {e}")
+        return None
 
 
 def run(on_step=None, send_digest_email: bool = True):
@@ -89,9 +124,13 @@ def run(on_step=None, send_digest_email: bool = True):
             .execute()
         )
         if not user_res.data:
-            logger.warning(f"User {user_id} not found in users table — Clerk webhook may not have fired. Skipping.")
-            continue
-        user_row = user_res.data[0]
+            logger.warning(f"User {user_id} not found in users table — attempting Clerk API fallback.")
+            user_row = _backfill_user_from_clerk(db, user_id)
+            if not user_row:
+                logger.warning(f"User {user_id} unresolvable — skipping.")
+                continue
+        else:
+            user_row = user_res.data[0]
         user_email = user_row.get("email", "")
         user_name = user_row.get("first_name", "")
 
