@@ -74,7 +74,8 @@ create table if not exists digest_jobs (
   salary_range text,
   source text,
   matched_at timestamptz default now(),
-  applied boolean default false
+  applied boolean default false,
+  anelo_note text default ''
 );
 
 -- Waitlist (backup — also captured via Resend)

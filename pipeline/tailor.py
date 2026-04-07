@@ -129,7 +129,7 @@ def generate_note(job: dict, prefs: dict) -> str:
 Job description excerpt: {description or "(none)"}
 Candidate profile: {user_context or "(general job seeker)"}
 
-Write 1-2 sentences explaining specifically why this job is a strong match for this candidate. Be concrete and direct — reference the company or role details. No generic phrases. No pronouns. Do not start with "This role". Return only the sentences, nothing else."""
+Write exactly 2 sentences explaining specifically why this job is a strong match for this candidate. Be concrete and direct — reference the company or role details. No generic phrases. No pronouns. Do not start with "This role". Return only the 2 sentences, nothing else."""
 
     try:
         msg = client.messages.create(
@@ -137,7 +137,13 @@ Write 1-2 sentences explaining specifically why this job is a strong match for t
             max_tokens=120,
             messages=[{"role": "user", "content": prompt}],
         )
-        return msg.content[0].text.strip() if msg.content else ""
+        raw = msg.content[0].text.strip() if msg.content else ""
+        # Hard cap: keep at most 2 sentences regardless of model output
+        if raw:
+            import re
+            sentences = re.split(r'(?<=[.!?])\s+', raw)
+            raw = " ".join(sentences[:2])
+        return raw
     except Exception as e:
         logger.warning(f"Note generation failed for {title} at {company}: {e}")
         return ""
