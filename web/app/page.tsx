@@ -114,38 +114,32 @@ export default function HomePage() {
   });
 
   // ── Scene opacities ────────────────────────────────────────────────────────
-  // Spacer is 500vh → ~400vh of scroll travel. Six scenes fit across 0→1.
-  // Each scene gets ~1/6 of the range; transitions take ~15% of each share.
-  // Existing scene content and visual logic are unchanged — only keyframe
-  // positions shift to accommodate three new scenes after "How it works".
 
-  // Scene 1: Radar — visible at start, fades out by 0.165
-  const radarOpacity = useTransform(scrollYProgress, [0, 0.10, 0.165, 1.0], [1, 1, 0, 0]);
-  const radarVisibility = useTransform(radarOpacity, (v) => (v <= 0 ? 'hidden' : 'visible'));
-  const radarPointerEvents = useTransform(radarOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
+  // Scene 1: Hero — visible on load, fades out before Radar
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.10, 0.165, 0.21], [1, 1, 0, 0]);
+  const heroDisplay = useTransform(heroOpacity, (v) => (v <= 0 ? 'none' : 'block'));
 
-  // Scene 2: Hero — fades in after radar, fades out before How It Works
-  const heroOpacity = useTransform(scrollYProgress, [0.165, 0.21, 0.295, 0.33], [0, 1, 1, 0]);
-  const heroPointerEvents = useTransform(heroOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
+  // Scene 2: Radar — fades in after Hero, fades out before How It Works
+  const radarOpacity = useTransform(scrollYProgress, [0.165, 0.21, 0.295, 0.33], [0, 1, 1, 0]);
+  const radarDisplay = useTransform(radarOpacity, (v) => (v <= 0 ? 'none' : 'block'));
 
-  // Scene 3: How It Works — now has a fade-out so Scene 4 can follow
+  // Scene 3: How It Works — has a fade-out so Scene 4 can follow
   const howOpacity = useTransform(scrollYProgress, [0.33, 0.37, 0.455, 0.50], [0, 1, 1, 0]);
+  const howDisplay = useTransform(howOpacity, (v) => (v <= 0 ? 'none' : 'block'));
 
-  // Scene 5: Inbox Preview (hover-reveal card inside)
+  // Scene 4: Inbox Preview
   const inboxOpacity = useTransform(scrollYProgress, [0.665, 0.705, 0.79, 0.83], [0, 1, 1, 0]);
-  const inboxPointerEvents = useTransform(inboxOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
+  const inboxDisplay = useTransform(inboxOpacity, (v) => (v <= 0 ? 'none' : 'block'));
 
-  // Scene 6: FAQ — stays fully visible at end of scroll
+  // Scene 5: FAQ — stays fully visible at end of scroll
   const faqOpacity = useTransform(scrollYProgress, [0.83, 0.87, 1.0], [0, 1, 1]);
-  const faqPointerEvents = useTransform(faqOpacity, (v) => (v > 0.1 ? 'auto' : 'none'));
+  const faqDisplay = useTransform(faqOpacity, (v) => (v <= 0 ? 'none' : 'block'));
 
   // Scroll hint — fades immediately
   const hintOpacity = useTransform(scrollYProgress, [0, 0.04], [1, 0]);
 
   function scrollToHero() {
-    if (!spacerRef.current) return;
-    const scrollable = spacerRef.current.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: scrollable * 0.21, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function scrollToHowItWorks() {
@@ -187,34 +181,9 @@ export default function HomePage() {
         {/* Sticky frame — stays fixed in viewport while page scrolls */}
         <div className="sticky top-0 h-screen overflow-hidden">
 
-          {/* Scene 1: Radar */}
+          {/* Scene 1: Hero */}
           <motion.div
-            style={{ opacity: radarOpacity, visibility: radarVisibility, pointerEvents: radarPointerEvents }}
-            className="absolute inset-0 flex items-center justify-center pt-16"
-          >
-            <RadarSection />
-            {/* Scroll hint */}
-            <motion.div
-              style={{ opacity: hintOpacity }}
-              className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-            >
-              <span className="text-xs text-white/40 tracking-widest uppercase">scroll</span>
-              <motion.svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                animate={{ y: [0, 4, 0] }}
-                transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
-              >
-                <path d="M8 3v10M4 9l4 4 4-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </motion.svg>
-            </motion.div>
-          </motion.div>
-
-          {/* Scene 2: Hero */}
-          <motion.div
-            style={{ opacity: heroOpacity, pointerEvents: heroPointerEvents }}
+            style={{ opacity: heroOpacity, display: heroDisplay }}
             className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pt-16"
           >
             <GooeyText
@@ -234,11 +203,36 @@ export default function HomePage() {
             >
               See how it works ↓
             </button>
+            {/* Scroll hint */}
+            <motion.div
+              style={{ opacity: hintOpacity }}
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+            >
+              <span className="text-xs text-white/40 tracking-widest uppercase">scroll</span>
+              <motion.svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                animate={{ y: [0, 4, 0] }}
+                transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+              >
+                <path d="M8 3v10M4 9l4 4 4-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </motion.svg>
+            </motion.div>
+          </motion.div>
+
+          {/* Scene 2: Radar */}
+          <motion.div
+            style={{ opacity: radarOpacity, display: radarDisplay }}
+            className="absolute inset-0 flex items-center justify-center pt-16"
+          >
+            <RadarSection />
           </motion.div>
 
           {/* Scene 3: How It Works */}
           <motion.div
-            style={{ opacity: howOpacity, pointerEvents: 'none' }}
+            style={{ opacity: howOpacity, display: howDisplay, pointerEvents: 'none' }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <div className="max-w-6xl mx-auto px-6 w-full">
@@ -258,19 +252,19 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Scene 5: Inbox Preview
+          {/* Scene 4: Inbox Preview
               The email card is hidden by default and revealed on hover via CSS transitions.
               No JS needed — opacity + translateY with group-hover. */}
           <motion.div
-            style={{ opacity: inboxOpacity, pointerEvents: inboxPointerEvents }}
+            style={{ opacity: inboxOpacity, display: inboxDisplay }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <div className="max-w-4xl mx-auto px-6 w-full">
               {/* Stat block */}
-              <div className="grid grid-cols-3 gap-6 mb-12 text-center">
+              <div className="grid grid-cols-3 gap-6 mb-3 text-center">
                 {stats.map((s) => (
                   <div key={s.label}>
-                    <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
+                    <p className="text-3xl font-black text-white mb-2">{s.value}</p>
                     <p className="text-sm text-slate-500">{s.label}</p>
                     {s.value === 'Free' && <p className="text-xs text-slate-600 mt-1">We&apos;ll give you plenty of notice before pricing changes.</p>}
                   </div>
@@ -278,14 +272,14 @@ export default function HomePage() {
               </div>
               {/* group: hovering anywhere in this container reveals the card */}
               <div className="group">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 text-center">Your inbox, upgraded</h2>
-                <p className="text-slate-400 text-base max-w-xl mx-auto mb-10 text-center">
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2 text-center">Your inbox, upgraded</h2>
+                <p className="text-slate-400 text-base max-w-xl mx-auto mb-4 text-center">
                   Every morning you get a short, scannable email with the roles most likely to fit — ranked by relevance and recency.
                 </p>
                 {/* Card: hidden by default, fades in on hover */}
                 {/* TODO: Replace this mock with a real screenshot of the daily digest email */}
                 <div
-                  className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out border border-white/10 bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden max-w-2xl mx-auto"
+                  className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out border border-white/10 bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden max-w-2xl mx-auto max-h-[50vh]"
                 >
                   {/* Email header */}
                   <div className="border-b border-white/10 px-6 py-4 flex items-center gap-3">
@@ -328,11 +322,11 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Scene 6: FAQ
+          {/* Scene 5: FAQ
               All questions visible at once. One-at-a-time accordion with max-height transition.
               Panel is sized to fit comfortably within viewport height. */}
           <motion.div
-            style={{ opacity: faqOpacity, pointerEvents: faqPointerEvents }}
+            style={{ opacity: faqOpacity, display: faqDisplay }}
             className="absolute inset-0 flex items-center justify-center pt-16"
           >
             <div className="max-w-2xl mx-auto px-6 w-full">
@@ -350,6 +344,11 @@ export default function HomePage() {
                     isLast={i === faqs.length - 1}
                   />
                 ))}
+              </div>
+              {/* CTA */}
+              <div className="mt-8 text-center">
+                <p className="text-lg font-semibold text-white mb-4">Ready to wake up to your daily digest?</p>
+                <ContinueWithGoogle />
               </div>
             </div>
           </motion.div>
