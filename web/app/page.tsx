@@ -283,18 +283,18 @@ export default function HomePage() {
                 {/* Card: hidden by default, fades in on hover */}
                 {/* TODO: Replace this mock with a real screenshot of the daily digest email */}
                 <div
-                  className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out border border-white/10 bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden max-w-2xl mx-auto max-h-[50vh]"
+                  className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out border border-white/15 bg-slate-950/85 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-sm rounded-2xl overflow-hidden max-w-2xl mx-auto max-h-[50vh]"
                 >
                   {/* Email header */}
-                  <div className="border-b border-white/10 px-6 py-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                  <div className="border-b border-white/10 px-6 py-4 flex items-center gap-3 bg-white/[0.03]">
+                    <div className="w-8 h-8 rounded-full bg-white/12 flex items-center justify-center shrink-0">
                       <span className="text-xs font-black text-white">a</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-white">Anelo · Your daily digest</p>
-                      <p className="text-xs text-slate-500 truncate">3 new matches · Tuesday, April 7</p>
+                      <p className="text-xs text-slate-300 truncate">3 new matches · Tuesday, April 7</p>
                     </div>
-                    <span className="text-xs text-slate-600 shrink-0">8:02 AM</span>
+                    <span className="text-xs text-slate-400 shrink-0">8:02 AM</span>
                   </div>
                   {/* Job matches */}
                   <div className="divide-y divide-white/5">
@@ -306,20 +306,20 @@ export default function HomePage() {
                       <div key={job.title} className="px-6 py-4 flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-white">{job.title}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{job.company} · {job.location}</p>
-                          <p className="text-xs text-slate-500 italic mt-1.5">{job.blurb}</p>
+                          <p className="text-xs text-slate-300 mt-0.5">{job.company} · {job.location}</p>
+                          <p className="text-xs text-slate-200/85 italic mt-1.5 leading-relaxed">{job.blurb}</p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className="inline-block px-2 py-0.5 rounded-full border border-white/10 text-xs text-slate-400">{job.tag}</span>
-                          <p className="text-xs text-slate-400 mt-1">{job.score}% match</p>
+                          <span className="inline-block px-2 py-0.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 text-xs text-emerald-200">{job.tag}</span>
+                          <p className="text-xs text-slate-200 mt-1">{job.score}% match</p>
                         </div>
                       </div>
                     ))}
                   </div>
                   {/* Email footer */}
-                  <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between">
-                    <span className="text-xs text-slate-400">anelo.io</span>
-                    <span className="text-xs text-slate-400">Unsubscribe · Manage preferences</span>
+                  <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between bg-white/[0.02]">
+                    <span className="text-xs text-slate-300">anelo.io</span>
+                    <span className="text-xs text-slate-300">Unsubscribe · Manage preferences</span>
                   </div>
                 </div>
               </div>

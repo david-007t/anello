@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
@@ -14,9 +15,6 @@ interface FormState {
   key_skills: string;
   current_salary: string;
   current_location: string;
-  work_authorization: string;
-  disability_status: string;
-  veteran_status: string;
   resume_uploaded: boolean;
 
   // Step 3 — Future Self
@@ -32,10 +30,6 @@ interface FormState {
   skills_to_acquire: string;
   industry_domain: string;
   values_impact: string;
-
-  // EEO extras
-  gender: string;
-  race_ethnicity: string;
 }
 
 const inputClass =
@@ -48,9 +42,6 @@ const defaultForm: FormState = {
   key_skills: '',
   current_salary: '',
   current_location: '',
-  work_authorization: 'Prefer not to say',
-  disability_status: 'Prefer not to say',
-  veteran_status: 'Prefer not to say',
   resume_uploaded: false,
 
   ideal_job_title_1: '',
@@ -65,9 +56,6 @@ const defaultForm: FormState = {
   skills_to_acquire: '',
   industry_domain: '',
   values_impact: '',
-
-  gender: '',
-  race_ethnicity: '',
 };
 
 // ─── Conversational question types ───────────────────────────────────────────
@@ -85,7 +73,7 @@ interface ConvQuestion {
   placeholder?: string;
 }
 
-const PROFILE_QUESTIONS: ConvQuestion[] = [
+const PROFILE_QUESTION_BASE: ConvQuestion[] = [
   {
     id: 'career_stage',
     question: 'Where are you in your career?',
@@ -160,11 +148,12 @@ const PROFILE_QUESTIONS: ConvQuestion[] = [
     type: 'single',
     field: 'target_salary',
     options: [
+      { label: 'Under $80K', value: '75000' },
       { label: '$80K–$120K', value: '100000' },
       { label: '$120K–$160K', value: '140000' },
       { label: '$160K–$200K', value: '180000' },
       { label: '$200K+', value: '200000' },
-      { label: 'Not sure yet', value: '' },
+      { label: 'Not sure yet', value: 'not_sure' },
     ],
   },
   {
@@ -176,75 +165,20 @@ const PROFILE_QUESTIONS: ConvQuestion[] = [
   },
 ];
 
-const EEO_QUESTIONS: ConvQuestion[] = [
-  {
-    id: 'sponsorship',
-    question: 'Do you require visa sponsorship?',
-    subtitle: 'This never affects your job matches and is never shared with employers.',
-    type: 'single',
-    field: 'work_authorization',
-    options: [
-      { label: "No, I'm authorized to work", value: "No, I don't require sponsorship" },
-      { label: 'Yes, I need sponsorship', value: 'Yes, I require sponsorship' },
-      { label: 'It depends on the role', value: 'Prefer not to say' },
-    ],
-  },
-  {
-    id: 'veteran',
-    question: 'Veteran status',
-    subtitle: 'This never affects your job matches and is never shared with employers.',
-    type: 'single',
-    field: 'veteran_status',
-    options: [
-      { label: 'Not a veteran', value: 'No' },
-      { label: 'Veteran', value: 'Yes' },
-      { label: 'Active duty', value: 'Active duty' },
-      { label: 'Prefer not to say', value: 'Prefer not to say' },
-    ],
-  },
-  {
-    id: 'disability',
-    question: 'Disability status',
-    subtitle: 'This never affects your job matches and is never shared with employers.',
-    type: 'single',
-    field: 'disability_status',
-    options: [
-      { label: 'No disability', value: 'No' },
-      { label: 'Yes, I have a disability', value: 'Yes' },
-      { label: 'Prefer not to say', value: 'Prefer not to say' },
-    ],
-  },
-  {
-    id: 'gender',
-    question: 'Gender',
-    subtitle: 'This never affects your job matches and is never shared with employers.',
-    type: 'single',
-    field: 'gender',
-    options: [
-      { label: 'Man', value: 'Man' },
-      { label: 'Woman', value: 'Woman' },
-      { label: 'Non-binary', value: 'Non-binary' },
-      { label: 'Prefer to self-describe', value: 'Self-describe' },
-      { label: 'Prefer not to say', value: 'Prefer not to say' },
-    ],
-  },
-  {
-    id: 'race',
-    question: 'Race / Ethnicity',
-    subtitle: 'This never affects your job matches and is never shared with employers.',
-    type: 'single',
-    field: 'race_ethnicity',
-    options: [
-      { label: 'White', value: 'White' },
-      { label: 'Black or African American', value: 'Black or African American' },
-      { label: 'Hispanic or Latino', value: 'Hispanic or Latino' },
-      { label: 'Asian', value: 'Asian' },
-      { label: 'Native American or Alaska Native', value: 'Native American' },
-      { label: 'Two or more races', value: 'Two or more races' },
-      { label: 'Prefer not to say', value: 'Prefer not to say' },
-    ],
-  },
-];
+function getProfileQuestions(workArrangement: string): ConvQuestion[] {
+  return PROFILE_QUESTION_BASE.filter((question) => {
+    if (question.id === 'location' && workArrangement === 'Remote') {
+      return false;
+    }
+    return true;
+  });
+}
+
+function shortenPreviewBlurb(blurb: string, fallback: string) {
+  const source = (blurb || fallback).trim();
+  const sentences = source.match(/[^.!?]+[.!?]?/g)?.map((part) => part.trim()).filter(Boolean) ?? [];
+  return (sentences.slice(0, 2).join(' ') || fallback).trim();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -255,7 +189,7 @@ function OnboardingInner() {
   const isEditMode = searchParams.get('mode') === 'edit';
   const stepParam = parseInt(searchParams.get('step') ?? '1', 10);
 
-  const [step, setStep] = useState<2 | 3 | 4 | 5>(2);
+  const [step, setStep] = useState<2 | 4 | 5>(2);
   const [convStep, setConvStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [digestFailed, setDigestFailed] = useState(false);
@@ -268,6 +202,9 @@ function OnboardingInner() {
   const [resumeError, setResumeError] = useState('');
   const [blurbs, setBlurbs] = useState({ blurb1: '', blurb2: '', blurb3: '' });
   const [blurbsLoading, setBlurbsLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const profileQuestions = getProfileQuestions(form.work_arrangement);
+  const totalProfileSteps = profileQuestions.length + 1;
 
   // Always: fetch existing resume so returning users see it pre-loaded
   useEffect(() => {
@@ -300,9 +237,6 @@ function OnboardingInner() {
             key_skills: data.key_skills ?? '',
             current_salary: data.current_salary ?? '',
             current_location: data.current_location ?? '',
-            work_authorization: data.work_authorization ?? 'Prefer not to say',
-            disability_status: data.disability_status ?? 'Prefer not to say',
-            veteran_status: data.veteran_status ?? 'Prefer not to say',
             // Future Self fields
             ideal_job_title_1: data.role ?? '',
             ideal_job_title_2: data.role_2 ?? '',
@@ -316,9 +250,6 @@ function OnboardingInner() {
             skills_to_acquire: data.skills ?? '',
             industry_domain: data.industry_domain ?? '',
             values_impact: data.values_impact ?? '',
-            // EEO extras
-            gender: data.gender ?? '',
-            race_ethnicity: data.race_ethnicity ?? '',
           }));
         }
         setDataLoaded(true);
@@ -332,34 +263,64 @@ function OnboardingInner() {
   useEffect(() => {
     if (!dataLoaded) return;
     const raw = Math.min(Math.max(stepParam, 1), 5);
-    const target = (raw === 1 ? 2 : raw) as 2 | 3 | 4 | 5;
-    setStep(target);
+    const target = (raw <= 2 ? 2 : raw === 3 ? 4 : Math.min(raw, 5)) as 2 | 4 | 5;
+    const timeout = window.setTimeout(() => setStep(target), 0);
+    return () => window.clearTimeout(timeout);
   }, [dataLoaded, stepParam]);
 
   useEffect(() => {
     if (step !== 4 || !form.ideal_job_title_1) return;
-    setBlurbsLoading(true);
-    fetch('/api/onboarding/preview-blurbs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        role1: form.ideal_job_title_1,
-        role2: form.ideal_job_title_2 || form.ideal_job_title_1,
-        role3: form.ideal_job_title_3 || form.ideal_job_title_1,
-        values: form.values_impact,
-        culture: form.company_culture,
-        domain: form.industry_domain,
-        skills: form.skills_to_acquire,
-      }),
-    })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setBlurbs(data); })
-      .catch(() => {})
-      .finally(() => setBlurbsLoading(false));
-  }, [step]);
+    let cancelled = false;
+
+    async function loadBlurbs() {
+      setBlurbsLoading(true);
+      try {
+        const response = await fetch('/api/onboarding/preview-blurbs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            role1: form.ideal_job_title_1,
+            role2: form.ideal_job_title_2 || form.ideal_job_title_1,
+            role3: form.ideal_job_title_3 || form.ideal_job_title_1,
+            values: form.values_impact,
+            culture: form.company_culture,
+            domain: form.industry_domain,
+            skills: form.skills_to_acquire,
+          }),
+        });
+        const data = response.ok ? await response.json() : null;
+        if (!cancelled && data) {
+          setBlurbs(data);
+        }
+      } catch {
+        // Fall back to the default preview copy below.
+      } finally {
+        if (!cancelled) {
+          setBlurbsLoading(false);
+        }
+      }
+    }
+
+    void loadBlurbs();
+    return () => {
+      cancelled = true;
+    };
+  }, [step, form.company_culture, form.ideal_job_title_1, form.ideal_job_title_2, form.ideal_job_title_3, form.industry_domain, form.skills_to_acquire, form.values_impact]);
 
   function set(key: keyof FormState, value: string | boolean) {
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((f) => {
+      if (key === 'work_arrangement' && typeof value === 'string') {
+        if (value === 'Remote') {
+          return { ...f, work_arrangement: value, location: 'Remote' };
+        }
+        return {
+          ...f,
+          work_arrangement: value,
+          location: f.location === 'Remote' ? '' : f.location,
+        };
+      }
+      return { ...f, [key]: value };
+    });
     setErrors((e) => {
       const next = { ...e };
       delete next[key];
@@ -387,19 +348,14 @@ function OnboardingInner() {
     setResumeUploading(false);
   }
 
-  function goToStep(s: 2 | 3 | 4 | 5) {
+  function goToStep(s: 2 | 4 | 5) {
     setConvStep(0);
     setStep(s);
     window.scrollTo(0, 0);
   }
 
-  function handleStep2Next() {
+  async function handleProfileSubmit() {
     setErrors({});
-    setConvStep(0);
-    goToStep(3);
-  }
-
-  async function saveCurrentSelf(): Promise<boolean> {
     setSubmitting(true);
     try {
       const res = await fetch('/api/preferences', {
@@ -408,47 +364,18 @@ function OnboardingInner() {
         body: JSON.stringify({
           current_role_title: form.current_role_title,
           years_experience: form.years_experience,
-        }),
-      });
-      if (!res.ok) {
-        setErrors({ submit: 'Could not save your preferences. Please try again.' });
-        setSubmitting(false);
-        return false;
-      }
-    } catch {
-      setErrors({ submit: 'Network error. Please check your connection and try again.' });
-      setSubmitting(false);
-      return false;
-    }
-    setSubmitting(false);
-    return true;
-  }
-
-  async function handleStep3Submit() {
-    setErrors({});
-    setSubmitting(true);
-    try {
-      const res = await fetch('/api/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
           role: form.ideal_job_title_1,
           role_2: form.ideal_job_title_2,
           role_3: form.ideal_job_title_3,
-          location: form.location,
+          location: form.work_arrangement === 'Remote' ? 'Remote' : form.location,
           work_arrangement: form.work_arrangement,
           experience_max: form.years_experience,
-          min_salary: form.target_salary,
+          min_salary: form.target_salary === 'not_sure' ? '' : form.target_salary,
           company_types: form.company_culture,
           skills: form.skills_to_acquire,
           work_life_balance: form.work_life_balance,
           industry_domain: form.industry_domain,
           values_impact: form.values_impact,
-          work_authorization: form.work_authorization,
-          disability_status: form.disability_status,
-          veteran_status: form.veteran_status,
-          gender: form.gender,
-          race_ethnicity: form.race_ethnicity,
         }),
       });
       if (!res.ok) {
@@ -465,6 +392,16 @@ function OnboardingInner() {
     }
     setSubmitting(false);
     goToStep(4);
+  }
+
+  async function handleCopyInviteLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.origin);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      setShareCopied(false);
+    }
   }
 
   async function handleSendDigest() {
@@ -534,6 +471,23 @@ function OnboardingInner() {
     const hasSingleSelection = () => {
       if (Array.isArray(q.field) || !q.options) return false;
       return q.options.some(opt => opt.value === form[q.field as keyof FormState]);
+    };
+
+    const getTextValue = () => {
+      if (Array.isArray(q.field)) return '';
+      return String(form[q.field as keyof FormState] ?? '').trim();
+    };
+
+    const validateCurrentQuestion = () => {
+      if (q.id === 'current_role' && !getTextValue()) {
+        setErrors({ current_role_title: 'Please add your current role.' });
+        return false;
+      }
+      if (q.id === 'location' && !getTextValue()) {
+        setErrors({ location: 'Please add your city.' });
+        return false;
+      }
+      return true;
     };
 
     return (
@@ -663,7 +617,11 @@ function OnboardingInner() {
               autoFocus
             />
             <HoverButton
-              onClick={onNext}
+              onClick={() => {
+                if (!validateCurrentQuestion()) return;
+                onNext();
+              }}
+              disabled={!getTextValue()}
               backgroundColor="rgba(255,255,255,0.05)"
               glowColor="#9ca3af"
               textColor="#e5e7eb"
@@ -672,6 +630,9 @@ function OnboardingInner() {
             >
               {nextLabel}
             </HoverButton>
+            {q.field && !Array.isArray(q.field) && errors[q.field] && (
+              <p className="text-red-400 text-xs">{errors[q.field]}</p>
+            )}
           </div>
         )}
 
@@ -689,7 +650,11 @@ function OnboardingInner() {
               autoFocus
             />
             <HoverButton
-              onClick={onNext}
+              onClick={() => {
+                if (!validateCurrentQuestion()) return;
+                onNext();
+              }}
+              disabled={!getTextValue()}
               backgroundColor="rgba(255,255,255,0.05)"
               glowColor="#9ca3af"
               textColor="#e5e7eb"
@@ -698,6 +663,9 @@ function OnboardingInner() {
             >
               {nextLabel}
             </HoverButton>
+            {q.field && !Array.isArray(q.field) && errors[q.field] && (
+              <p className="text-red-400 text-xs">{errors[q.field]}</p>
+            )}
           </div>
         )}
 
@@ -771,9 +739,9 @@ function OnboardingInner() {
         {/* Nav */}
         <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
-            <a href="/" className="text-xl font-black tracking-tight text-white hover:opacity-80 transition-opacity">
+            <Link href="/" className="text-xl font-black tracking-tight text-white hover:opacity-80 transition-opacity">
               anelo
-            </a>
+            </Link>
           </div>
         </nav>
 
@@ -798,13 +766,13 @@ function OnboardingInner() {
                     transition={{ duration: 0.25 }}
                     className="space-y-6"
                   >
-                    {/* Progress (resume is the first of 8 total: resume + 7 questions) */}
+                    {/* Progress */}
                     <div className="flex items-center gap-1.5 mb-2">
-                      {Array.from({ length: 8 }).map((_, i) => (
+                      {Array.from({ length: totalProfileSteps }).map((_, i) => (
                         <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i === 0 ? 'bg-white/70' : 'bg-white/10'}`} />
                       ))}
                     </div>
-                    <p className="text-xs text-white/40 font-mono mb-2">1 / 8</p>
+                    <p className="text-xs text-white/40 font-mono mb-2">1 / {totalProfileSteps}</p>
 
                     <div>
                       <h2 className="text-2xl font-bold text-white leading-snug">Drop your resume.</h2>
@@ -853,100 +821,32 @@ function OnboardingInner() {
                 )}
 
                 {/* Conversational questions Q1-Q7 (convStep 1-7) */}
-                {convStep >= 1 && convStep <= PROFILE_QUESTIONS.length && renderConvQuestion(
-                  PROFILE_QUESTIONS,
+                {convStep >= 1 && convStep <= profileQuestions.length && renderConvQuestion(
+                  profileQuestions,
                   convStep - 1,
-                  () => {
+                  async () => {
                     // Validate roles question
-                    if (PROFILE_QUESTIONS[convStep - 1]?.id === 'target_roles') {
+                    if (profileQuestions[convStep - 1]?.id === 'target_roles') {
                       if (!form.ideal_job_title_1.trim()) {
                         setErrors({ ideal_job_title_1: 'At least one role is required.' });
                         return;
                       }
                       setErrors({});
                     }
-                    if (convStep < PROFILE_QUESTIONS.length) {
+                    if (convStep < profileQuestions.length) {
                       setConvStep(convStep + 1);
                     } else {
-                      // Done with profile — save current self + go to step 3
-                      handleStep2Next();
+                      await handleProfileSubmit();
                     }
                   },
                   () => {
                     if (convStep > 1) setConvStep(convStep - 1);
                     else setConvStep(0);
                   },
-                  convStep === PROFILE_QUESTIONS.length,
-                  convStep === PROFILE_QUESTIONS.length ? 'Almost there →' : 'Continue →',
+                  convStep === profileQuestions.length,
+                  convStep === profileQuestions.length ? (submitting ? 'Saving...' : 'See my digest preview →') : 'Continue →',
                   1,
-                  PROFILE_QUESTIONS.length + 1,
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 3 — EEO questions (conversational) */}
-          {step === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            >
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 space-y-6">
-                {/* Show EEO intro on first load */}
-                {convStep === 0 && (
-                  <motion.div
-                    key="eeo-intro"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6"
-                  >
-                    <div>
-                      <p className="text-xs text-white/40 font-mono mb-2">Almost done</p>
-                      <h2 className="text-2xl font-bold text-white leading-snug">One last thing.</h2>
-                      <p className="text-sm text-white/40 mt-2 leading-relaxed">
-                        These questions come up on every application. Answer them once so we have them ready.
-                      </p>
-                    </div>
-                    <HoverButton
-                      onClick={() => setConvStep(1)}
-                      backgroundColor="rgba(255,255,255,0.05)"
-                      glowColor="#9ca3af"
-                      textColor="#e5e7eb"
-                      hoverTextColor="#ffffff"
-                      className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
-                    >
-                      Let&apos;s do it →
-                    </HoverButton>
-                    <button
-                      onClick={() => { goToStep(2); setConvStep(PROFILE_QUESTIONS.length); }}
-                      className="text-sm text-white/30 hover:text-white/60 transition-colors"
-                    >
-                      ← Back
-                    </button>
-                  </motion.div>
-                )}
-
-                {/* EEO questions Q1-Q6 (convStep 1-6) */}
-                {convStep >= 1 && convStep <= EEO_QUESTIONS.length && renderConvQuestion(
-                  EEO_QUESTIONS,
-                  convStep - 1,
-                  async () => {
-                    if (convStep < EEO_QUESTIONS.length) {
-                      setConvStep(convStep + 1);
-                    } else {
-                      // Last EEO question answered — save everything and go to step 4
-                      await handleStep3Submit();
-                    }
-                  },
-                  () => {
-                    if (convStep > 1) setConvStep(convStep - 1);
-                    else setConvStep(0);
-                  },
-                  convStep === EEO_QUESTIONS.length,
-                  convStep === EEO_QUESTIONS.length ? (submitting ? 'Saving...' : 'See my digest preview →') : 'Continue →'
+                  totalProfileSteps,
                 )}
               </div>
             </motion.div>
@@ -985,9 +885,9 @@ function OnboardingInner() {
                             <p className="text-sm font-semibold text-white">{form.ideal_job_title_1 || 'your role'}</p>
                             <p className="text-xs text-white/50">Stripe</p>
                           </div>
-                          <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">Remote</span>
+                          <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">{form.work_arrangement === 'Remote' ? 'Remote' : 'Remote'}</span>
                         </div>
-                        <p className="text-xs text-white/40 italic">Stripe&apos;s scale and engineering culture make this a strong fit for your growth goals. A high-impact role at a company that moves fast.</p>
+                        <p className="text-xs text-white/40 italic">{blurbsLoading ? 'Writing your preview...' : shortenPreviewBlurb(blurbs.blurb1, 'Stripe looks like a strong fit for the kind of role you want next. The team and scope line up well with your profile.')}</p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -1000,9 +900,9 @@ function OnboardingInner() {
                             <p className="text-sm font-semibold text-white">{form.ideal_job_title_2 || form.ideal_job_title_1 || 'your role'}</p>
                             <p className="text-xs text-white/50">Notion</p>
                           </div>
-                          <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
+                          <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">{form.work_arrangement === 'Remote' ? 'Remote' : form.location || 'San Francisco, CA'}</span>
                         </div>
-                        <p className="text-xs text-white/40 italic">Notion&apos;s product-led culture aligns well with your target environment. This role offers real ownership from day one.</p>
+                        <p className="text-xs text-white/40 italic">{blurbsLoading ? 'Writing your preview...' : shortenPreviewBlurb(blurbs.blurb2, 'Notion fits the kind of team environment you said you want. It looks like the sort of role where you could have real ownership quickly.')}</p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -1015,9 +915,9 @@ function OnboardingInner() {
                             <p className="text-sm font-semibold text-white">{form.ideal_job_title_3 || form.ideal_job_title_1 || 'your role'}</p>
                             <p className="text-xs text-white/50">OpenAI</p>
                           </div>
-                          <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">San Francisco, CA</span>
+                          <span className="text-xs bg-white/10 text-white/60 rounded-full px-2 py-0.5 whitespace-nowrap">{form.work_arrangement === 'Remote' ? 'Remote' : form.location || 'San Francisco, CA'}</span>
                         </div>
-                        <p className="text-xs text-white/40 italic">OpenAI sits at the frontier of what you&apos;re building toward. A strong match for someone ready for high-stakes, high-impact work.</p>
+                        <p className="text-xs text-white/40 italic">{blurbsLoading ? 'Writing your preview...' : shortenPreviewBlurb(blurbs.blurb3, 'OpenAI lines up with the ambitious direction you are aiming for. It is the kind of high-upside role Anelo is built to surface early.')}</p>
                         <a href="#" className="text-xs text-white/50 hover:text-white/80 transition-colors">
                           Apply Directly &rarr;
                         </a>
@@ -1066,18 +966,18 @@ function OnboardingInner() {
                     {submitting ? 'Sending...' : 'Looks good! Send my first digest \u2192'}
                   </HoverButton>
                   <button
-                    onClick={() => goToStep(3)}
+                    onClick={() => goToStep(2)}
                     className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
                   >
                     &larr; Refine my profile
                   </button>
                   {isEditMode && (
-                    <a
+                    <Link
                       href="/update-preferences"
                       className="text-sm text-white/40 hover:text-white/60 transition-colors text-center"
                     >
                       &larr; Back to update menu
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>
@@ -1106,7 +1006,7 @@ function OnboardingInner() {
                 ) : (
                   <p className="text-slate-400 text-sm leading-relaxed">
                     Your Anelo profile is now active! Your first personalized digest will arrive at{' '}
-                    <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span> within 20 minutes.
+                    <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span> in about 20 minutes.
                   </p>
                 )}
 
@@ -1120,13 +1020,13 @@ function OnboardingInner() {
                     <span>Check your email</span>
                   </div>
                   <p className="text-xs text-white/30 pl-[30px]">Don&apos;t see it? Check your spam folder.</p>
-                  <a
-                    href="/update-preferences"
-                    className="flex items-center gap-3 text-sm text-white/60 hover:text-white/80 transition-colors"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
-                      <path
+                    <Link
+                      href="/update-preferences"
+                      className="flex items-center gap-3 text-sm text-white/60 hover:text-white/80 transition-colors"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+                        <path
                         d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m14.14 0l-1.41-1.41M6.34 6.34L4.93 4.93"
                         stroke="currentColor"
                         strokeWidth="1.5"
@@ -1134,7 +1034,30 @@ function OnboardingInner() {
                       />
                     </svg>
                     <span>Change your roles, salary, or location →</span>
-                  </a>
+                  </Link>
+                </div>
+
+                <div className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-4 text-left">
+                  <p className="text-sm font-medium text-white">Know someone else job hunting?</p>
+                  <p className="text-xs text-white/45 mt-1">Share Anelo to give them priority beta access.</p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <HoverButton
+                      onClick={handleCopyInviteLink}
+                      backgroundColor="rgba(255,255,255,0.05)"
+                      glowColor="#9ca3af"
+                      textColor="#e5e7eb"
+                      hoverTextColor="#ffffff"
+                      className="!text-sm !py-2.5 !px-4 !rounded-xl border border-white/10"
+                    >
+                      {shareCopied ? 'Invite link copied' : 'Copy invite link'}
+                    </HoverButton>
+                    <Link
+                      href="/"
+                      className="inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/60 hover:text-white/80 transition-colors"
+                    >
+                      View Anelo home
+                    </Link>
+                  </div>
                 </div>
 
                 <HoverButton
@@ -1148,12 +1071,12 @@ function OnboardingInner() {
                   Back to home &rarr;
                 </HoverButton>
                 {isEditMode && (
-                  <a
+                  <Link
                     href="/update-preferences"
                     className="text-sm text-white/40 hover:text-white/60 transition-colors"
                   >
                     &larr; Back to update menu
-                  </a>
+                  </Link>
                 )}
               </div>
             </motion.div>
