@@ -182,6 +182,7 @@ const EEO_QUESTIONS: ConvQuestion[] = [
   {
     id: 'sponsorship',
     question: 'Do you require visa sponsorship?',
+    subtitle: 'This never affects your job matches and is never shared with employers.',
     type: 'single',
     field: 'work_authorization',
     options: [
@@ -193,6 +194,7 @@ const EEO_QUESTIONS: ConvQuestion[] = [
   {
     id: 'veteran',
     question: 'Veteran status',
+    subtitle: 'This never affects your job matches and is never shared with employers.',
     type: 'single',
     field: 'veteran_status',
     options: [
@@ -205,6 +207,7 @@ const EEO_QUESTIONS: ConvQuestion[] = [
   {
     id: 'disability',
     question: 'Disability status',
+    subtitle: 'This never affects your job matches and is never shared with employers.',
     type: 'single',
     field: 'disability_status',
     options: [
@@ -230,7 +233,7 @@ const EEO_QUESTIONS: ConvQuestion[] = [
   {
     id: 'gender',
     question: 'Gender',
-    subtitle: 'Used for EEO reporting on job applications.',
+    subtitle: 'This never affects your job matches and is never shared with employers.',
     type: 'single',
     field: 'gender',
     options: [
@@ -244,7 +247,7 @@ const EEO_QUESTIONS: ConvQuestion[] = [
   {
     id: 'race',
     question: 'Race / Ethnicity',
-    subtitle: 'Used for EEO reporting on job applications.',
+    subtitle: 'This never affects your job matches and is never shared with employers.',
     type: 'single',
     field: 'race_ethnicity',
     options: [
@@ -873,7 +876,7 @@ function OnboardingInner() {
                     else setConvStep(0);
                   },
                   convStep === PROFILE_QUESTIONS.length,
-                  convStep === PROFILE_QUESTIONS.length ? 'Continue to final questions →' : 'Continue →'
+                  convStep === PROFILE_QUESTIONS.length ? 'Almost there →' : 'Continue →'
                 )}
               </div>
             </motion.div>
@@ -1024,6 +1027,7 @@ function OnboardingInner() {
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
                       Anelo&apos;s Extra Step
                     </h3>
+                    <p className="text-xs text-white/40 mb-3">We pull company signals and LinkedIn data to give you context before you apply.</p>
                     <div className="space-y-2 text-xs text-white/50">
                       <p>
                         <span className="text-white/70 font-medium">Insider Insight:</span>{' '}
@@ -1042,7 +1046,7 @@ function OnboardingInner() {
 
                   {/* Beta badge */}
                   <div className="text-center text-xs text-white/40 border border-white/10 rounded-lg px-4 py-2 mt-4">
-                    🔒 Auto-Apply is currently in Beta — stay tuned for your invite to unlock even more time!
+                    Coming soon: one-click apply, straight from your digest.
                   </div>
                 </div>
 
@@ -1099,7 +1103,7 @@ function OnboardingInner() {
                 ) : (
                   <p className="text-slate-400 text-sm leading-relaxed">
                     Your Anelo profile is now active! Your first personalized digest will arrive at{' '}
-                    <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span> shortly.
+                    <span className="text-white/70">{user?.primaryEmailAddress?.emailAddress ?? 'your inbox'}</span> within 20 minutes.
                   </p>
                 )}
 
@@ -1126,7 +1130,7 @@ function OnboardingInner() {
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span>Update your preferences</span>
+                    <span>Change your roles, salary, or location →</span>
                   </a>
                 </div>
 

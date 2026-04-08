@@ -92,7 +92,7 @@ export default function WaitlistForm() {
         <p className="mt-2 text-sm text-red-400">{message}</p>
       )}
       <p className="mt-3 text-xs text-white/30">
-        Free to try · No credit card required · Unsubscribe anytime
+        Free during early access · No credit card required · Unsubscribe anytime
       </p>
     </div>
   );

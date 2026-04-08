@@ -12,7 +12,7 @@ const steps = [
   {
     step: "01",
     title: "Upload your resume",
-    description: "Drop in your master resume. Anelo learns your skills, experience, and voice.",
+    description: "Drop in your master resume. Anelo learns your skills and experience.",
   },
   {
     step: "02",
@@ -22,7 +22,7 @@ const steps = [
   {
     step: "03",
     title: "Wake up to your daily digest",
-    description: "Anelo runs multiple times a day, grabs the freshest postings, and scores each one against your profile. The best matches land in your inbox every morning — so you're always first in line.",
+    description: "Anelo runs multiple times a day, grabs the freshest postings, and scores each one against your profile. The best matches land in your inbox every morning.",
   },
 ];
 
@@ -272,6 +272,7 @@ export default function HomePage() {
                   <div key={s.label}>
                     <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
                     <p className="text-sm text-slate-500">{s.label}</p>
+                    {s.value === 'Free' && <p className="text-xs text-slate-600 mt-1">We&apos;ll give you plenty of notice before pricing changes.</p>}
                   </div>
                 ))}
               </div>

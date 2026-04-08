@@ -11,7 +11,7 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Anelo — Your jobs come to you.",
   description:
-    "Anelo is an AI job agent that scans 8+ job boards daily, scores the best matches for your profile, and delivers a curated digest to your inbox every morning. Free to try.",
+    "Anelo is an AI job agent that scans 8+ job boards daily, scores the best matches for your profile, and delivers a curated digest to your inbox every morning. Free during early access.",
   metadataBase: new URL("https://anelo.io"),
   alternates: {
     canonical: "https://anelo.io",
