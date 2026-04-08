@@ -184,7 +184,7 @@ export default function HomePage() {
           {/* Scene 1: Hero */}
           <motion.div
             style={{ opacity: heroOpacity, display: heroDisplay }}
-            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pt-16"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pt-20"
           >
             <GooeyText
               texts={["Let jobs find you.", "Every single day.", "On autopilot."]}
@@ -225,7 +225,7 @@ export default function HomePage() {
           {/* Scene 2: Radar */}
           <motion.div
             style={{ opacity: radarOpacity, display: radarDisplay }}
-            className="absolute inset-0 flex items-center justify-center pt-16"
+            className="absolute inset-0 flex items-center justify-center pt-20"
           >
             <RadarSection />
           </motion.div>
@@ -233,7 +233,7 @@ export default function HomePage() {
           {/* Scene 3: How It Works */}
           <motion.div
             style={{ opacity: howOpacity, display: howDisplay, pointerEvents: 'none' }}
-            className="absolute inset-0 flex items-center justify-center pt-16"
+            className="absolute inset-0 flex items-center justify-center pt-20"
           >
             <div className="max-w-6xl mx-auto px-6 w-full">
               <div className="text-center mb-12">
@@ -257,7 +257,7 @@ export default function HomePage() {
               No JS needed — opacity + translateY with group-hover. */}
           <motion.div
             style={{ opacity: inboxOpacity, display: inboxDisplay }}
-            className="absolute inset-0 flex items-center justify-center pt-16"
+            className="absolute inset-0 flex items-center justify-center pt-20"
           >
             <div className="max-w-4xl mx-auto px-6 w-full">
               {/* Stat block */}
@@ -327,7 +327,7 @@ export default function HomePage() {
               Panel is sized to fit comfortably within viewport height. */}
           <motion.div
             style={{ opacity: faqOpacity, display: faqDisplay }}
-            className="absolute inset-0 flex items-center justify-center pt-16"
+            className="absolute inset-0 flex items-center justify-center pt-20"
           >
             <div className="max-w-2xl mx-auto px-6 w-full">
               <h2 className="text-2xl font-bold text-white mb-6 text-center">
