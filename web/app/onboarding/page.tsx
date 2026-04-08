@@ -17,7 +17,6 @@ interface FormState {
   work_authorization: string;
   disability_status: string;
   veteran_status: string;
-  security_clearance: string;
   resume_uploaded: boolean;
 
   // Step 3 — Future Self
@@ -52,7 +51,6 @@ const defaultForm: FormState = {
   work_authorization: 'Prefer not to say',
   disability_status: 'Prefer not to say',
   veteran_status: 'Prefer not to say',
-  security_clearance: 'None',
   resume_uploaded: false,
 
   ideal_job_title_1: '',
@@ -217,20 +215,6 @@ const EEO_QUESTIONS: ConvQuestion[] = [
     ],
   },
   {
-    id: 'clearance',
-    question: 'Security clearance',
-    type: 'single',
-    field: 'security_clearance',
-    options: [
-      { label: 'None', value: 'None' },
-      { label: 'Confidential', value: 'Confidential' },
-      { label: 'Secret', value: 'Secret' },
-      { label: 'Top Secret', value: 'Top Secret' },
-      { label: 'TS/SCI', value: 'TS/SCI' },
-      { label: 'Prefer not to say', value: 'Prefer not to say' },
-    ],
-  },
-  {
     id: 'gender',
     question: 'Gender',
     subtitle: 'This never affects your job matches and is never shared with employers.',
@@ -319,7 +303,6 @@ function OnboardingInner() {
             work_authorization: data.work_authorization ?? 'Prefer not to say',
             disability_status: data.disability_status ?? 'Prefer not to say',
             veteran_status: data.veteran_status ?? 'Prefer not to say',
-            security_clearance: data.security_clearance ?? 'None',
             // Future Self fields
             ideal_job_title_1: data.role ?? '',
             ideal_job_title_2: data.role_2 ?? '',
@@ -464,7 +447,6 @@ function OnboardingInner() {
           work_authorization: form.work_authorization,
           disability_status: form.disability_status,
           veteran_status: form.veteran_status,
-          security_clearance: form.security_clearance,
           gender: form.gender,
           race_ethnicity: form.race_ethnicity,
         }),
