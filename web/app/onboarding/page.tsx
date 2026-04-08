@@ -487,7 +487,9 @@ function OnboardingInner() {
     onNext: () => void,
     onBack: () => void,
     isLastQuestion: boolean,
-    nextLabel: string = 'Continue →'
+    nextLabel: string = 'Continue →',
+    stepOffset: number = 0,
+    totalSteps?: number,
   ) {
     const q = questions[currentIdx];
     if (!q) return null;
@@ -495,7 +497,6 @@ function OnboardingInner() {
     const handleSingleSelect = (value: string) => {
       if (Array.isArray(q.field)) return;
       set(q.field as keyof FormState, value);
-      setTimeout(onNext, 180);
     };
 
     const handleMultiToggle = (value: string) => {
@@ -530,6 +531,11 @@ function OnboardingInner() {
       return current ? current.split(', ').filter(Boolean).length : 0;
     };
 
+    const hasSingleSelection = () => {
+      if (Array.isArray(q.field) || !q.options) return false;
+      return q.options.some(opt => opt.value === form[q.field as keyof FormState]);
+    };
+
     return (
       <motion.div
         key={q.id}
@@ -541,11 +547,11 @@ function OnboardingInner() {
       >
         {/* Progress */}
         <div className="flex items-center gap-1.5 mb-2">
-          {questions.map((_, i) => (
+          {Array.from({ length: totalSteps ?? questions.length }).map((_, i) => (
             <div
               key={i}
               className={`h-1 rounded-full flex-1 transition-all ${
-                i < currentIdx ? 'bg-white' : i === currentIdx ? 'bg-white/70' : 'bg-white/10'
+                i < stepOffset + currentIdx ? 'bg-white' : i === stepOffset + currentIdx ? 'bg-white/70' : 'bg-white/10'
               }`}
             />
           ))}
@@ -553,38 +559,51 @@ function OnboardingInner() {
 
         {/* Question */}
         <div>
-          <p className="text-xs text-white/40 font-mono mb-2">{currentIdx + 1} / {questions.length}</p>
+          <p className="text-xs text-white/40 font-mono mb-2">{stepOffset + currentIdx + 1} / {totalSteps ?? questions.length}</p>
           <h2 className="text-2xl font-bold text-white leading-snug">{q.question}</h2>
           {q.subtitle && <p className="text-sm text-white/40 mt-1">{q.subtitle}</p>}
         </div>
 
         {/* Options */}
         {q.type === 'single' && q.options && (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {q.options.map((opt) => {
-              const selected = !Array.isArray(q.field) && form[q.field as keyof FormState] === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => handleSingleSelect(opt.value)}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
-                    selected
-                      ? 'border-white/80 bg-white/10 text-white'
-                      : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
-                  }`}
-                >
-                  {opt.emoji && <span className="text-lg shrink-0">{opt.emoji}</span>}
-                  <span className="text-sm font-medium">{opt.label}</span>
-                  {selected && (
-                    <span className="ml-auto shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M2 7l4 4 6-7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {q.options.map((opt) => {
+                const selected = !Array.isArray(q.field) && form[q.field as keyof FormState] === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleSingleSelect(opt.value)}
+                    className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
+                      selected
+                        ? 'border-white/80 bg-white/10 text-white'
+                        : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    {opt.emoji && <span className="text-lg shrink-0">{opt.emoji}</span>}
+                    <span className="text-sm font-medium">{opt.label}</span>
+                    {selected && (
+                      <span className="ml-auto shrink-0">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 7l4 4 6-7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <HoverButton
+              onClick={onNext}
+              disabled={!hasSingleSelection()}
+              backgroundColor="rgba(255,255,255,0.05)"
+              glowColor="#9ca3af"
+              textColor="#e5e7eb"
+              hoverTextColor="#ffffff"
+              className="!text-sm !py-2.5 !px-5 !rounded-xl border border-white/10 w-full"
+            >
+              {nextLabel}
+            </HoverButton>
           </div>
         )}
 
@@ -599,7 +618,7 @@ function OnboardingInner() {
                     onClick={() => handleMultiToggle(opt.value)}
                     className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all ${
                       selected
-                        ? 'border-white/80 bg-white/10 text-white'
+                        ? 'border-white bg-white/20 text-white ring-1 ring-white/30'
                         : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white'
                     }`}
                   >
@@ -858,7 +877,9 @@ function OnboardingInner() {
                     else setConvStep(0);
                   },
                   convStep === PROFILE_QUESTIONS.length,
-                  convStep === PROFILE_QUESTIONS.length ? 'Almost there →' : 'Continue →'
+                  convStep === PROFILE_QUESTIONS.length ? 'Almost there →' : 'Continue →',
+                  1,
+                  PROFILE_QUESTIONS.length + 1,
                 )}
               </div>
             </motion.div>
