@@ -117,23 +117,23 @@ export default function HomePage() {
 
   // Scene 1: Hero — visible on load, fades out before Radar
   const heroOpacity = useTransform(scrollYProgress, [0, 0.10, 0.165, 0.21], [1, 1, 0, 0]);
-  const heroDisplay = useTransform(heroOpacity, (v) => (v <= 0 ? 'none' : 'block'));
+  const heroDisplay = useTransform(heroOpacity, (v) => (v <= 0 ? 'none' : 'flex'));
 
   // Scene 2: Radar — fades in after Hero, fades out before How It Works
   const radarOpacity = useTransform(scrollYProgress, [0.165, 0.21, 0.295, 0.33], [0, 1, 1, 0]);
-  const radarDisplay = useTransform(radarOpacity, (v) => (v <= 0 ? 'none' : 'block'));
+  const radarDisplay = useTransform(radarOpacity, (v) => (v <= 0 ? 'none' : 'flex'));
 
   // Scene 3: How It Works — has a fade-out so Scene 4 can follow
   const howOpacity = useTransform(scrollYProgress, [0.33, 0.37, 0.455, 0.50], [0, 1, 1, 0]);
-  const howDisplay = useTransform(howOpacity, (v) => (v <= 0 ? 'none' : 'block'));
+  const howDisplay = useTransform(howOpacity, (v) => (v <= 0 ? 'none' : 'flex'));
 
   // Scene 4: Inbox Preview
   const inboxOpacity = useTransform(scrollYProgress, [0.665, 0.705, 0.79, 0.83], [0, 1, 1, 0]);
-  const inboxDisplay = useTransform(inboxOpacity, (v) => (v <= 0 ? 'none' : 'block'));
+  const inboxDisplay = useTransform(inboxOpacity, (v) => (v <= 0 ? 'none' : 'flex'));
 
   // Scene 5: FAQ — stays fully visible at end of scroll
   const faqOpacity = useTransform(scrollYProgress, [0.83, 0.87, 1.0], [0, 1, 1]);
-  const faqDisplay = useTransform(faqOpacity, (v) => (v <= 0 ? 'none' : 'block'));
+  const faqDisplay = useTransform(faqOpacity, (v) => (v <= 0 ? 'none' : 'flex'));
 
   // Scroll hint — fades immediately
   const hintOpacity = useTransform(scrollYProgress, [0, 0.04], [1, 0]);
