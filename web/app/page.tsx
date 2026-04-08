@@ -184,25 +184,27 @@ export default function HomePage() {
           {/* Scene 1: Hero */}
           <motion.div
             style={{ opacity: heroOpacity, display: heroDisplay }}
-            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6"
           >
-            <GooeyText
-              texts={["Let jobs find you.", "Every single day.", "On autopilot."]}
-              morphTime={1.2}
-              cooldownTime={1.8}
-              className="h-28 w-full"
-              textClassName="font-extrabold tracking-tight text-white"
-            />
-            <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mt-8 mb-10">
-              Anelo scans 8+ job boards daily, scores the best matches for your profile, and delivers a curated digest to your inbox — every morning.
-            </p>
-            <ContinueWithGoogle />
-            <button
-              onClick={scrollToHowItWorks}
-              className="mt-5 text-sm text-white/40 hover:text-white/70 transition-colors cursor-pointer underline-offset-4 hover:underline"
-            >
-              See how it works ↓
-            </button>
+            <div style={{ paddingTop: '64px' }} className="flex flex-col items-center text-center">
+              <GooeyText
+                texts={["Let jobs find you.", "Every single day.", "On autopilot."]}
+                morphTime={1.2}
+                cooldownTime={1.8}
+                className="h-28 w-full"
+                textClassName="font-extrabold tracking-tight text-white"
+              />
+              <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed mt-8 mb-10">
+                Anelo scans 8+ job boards daily, scores the best matches for your profile, and delivers a curated digest to your inbox — every morning.
+              </p>
+              <ContinueWithGoogle />
+              <button
+                onClick={scrollToHowItWorks}
+                className="mt-5 text-sm text-white/40 hover:text-white/70 transition-colors cursor-pointer underline-offset-4 hover:underline"
+              >
+                See how it works ↓
+              </button>
+            </div>
             {/* Scroll hint */}
             <motion.div
               style={{ opacity: hintOpacity }}
@@ -225,17 +227,19 @@ export default function HomePage() {
           {/* Scene 2: Radar */}
           <motion.div
             style={{ opacity: radarOpacity, display: radarDisplay }}
-            className="absolute inset-0 flex flex-col items-center justify-center"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6"
           >
-            <RadarSection />
+            <div style={{ paddingTop: '64px' }}>
+              <RadarSection />
+            </div>
           </motion.div>
 
           {/* Scene 3: How It Works */}
           <motion.div
             style={{ opacity: howOpacity, display: howDisplay, pointerEvents: 'none' }}
-            className="absolute inset-0 flex flex-col items-center justify-center"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6"
           >
-            <div className="max-w-6xl mx-auto px-6 w-full">
+            <div style={{ paddingTop: '64px' }} className="max-w-6xl mx-auto w-full">
               <div className="text-center mb-12">
                 <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">How it works</h2>
                 <p className="text-slate-400 text-base max-w-xl mx-auto">Three steps. Then sit back.</p>
@@ -257,9 +261,9 @@ export default function HomePage() {
               No JS needed — opacity + translateY with group-hover. */}
           <motion.div
             style={{ opacity: inboxOpacity, display: inboxDisplay }}
-            className="absolute inset-0 flex flex-col items-center justify-center"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6"
           >
-            <div className="max-w-4xl mx-auto px-6 w-full">
+            <div style={{ paddingTop: '64px' }} className="max-w-4xl mx-auto w-full">
               {/* Stat block */}
               <div className="grid grid-cols-3 gap-6 mb-3 text-center">
                 {stats.map((s) => (
@@ -327,9 +331,9 @@ export default function HomePage() {
               Panel is sized to fit comfortably within viewport height. */}
           <motion.div
             style={{ opacity: faqOpacity, display: faqDisplay }}
-            className="absolute inset-0 flex flex-col items-center justify-center"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6"
           >
-            <div className="max-w-2xl mx-auto px-6 w-full">
+            <div style={{ paddingTop: '64px' }} className="max-w-2xl mx-auto w-full">
               <h2 className="text-2xl font-bold text-white mb-6 text-center">
                 Frequently asked
               </h2>
