@@ -97,12 +97,110 @@ create table if not exists request_logs (
 );
 
 -- RLS: users can only read/write their own data
+alter table users enable row level security;
 alter table resumes enable row level security;
 alter table preferences enable row level security;
 alter table applications enable row level security;
 alter table digest_jobs enable row level security;
+alter table request_logs enable row level security;
+alter table waitlist enable row level security;
+
+create policy "Users read own profile row"
+on users for select to authenticated
+using (id = (auth.uid())::text);
+
+create policy "Users read own preferences"
+on preferences for select to authenticated
+using (user_id = (auth.uid())::text);
+
+create policy "Users insert own preferences"
+on preferences for insert to authenticated
+with check (user_id = (auth.uid())::text);
+
+create policy "Users update own preferences"
+on preferences for update to authenticated
+using (user_id = (auth.uid())::text)
+with check (user_id = (auth.uid())::text);
+
+create policy "Users delete own preferences"
+on preferences for delete to authenticated
+using (user_id = (auth.uid())::text);
+
+create policy "Users read own resumes"
+on resumes for select to authenticated
+using (user_id = (auth.uid())::text);
+
+create policy "Users insert own resumes"
+on resumes for insert to authenticated
+with check (user_id = (auth.uid())::text);
+
+create policy "Users update own resumes"
+on resumes for update to authenticated
+using (user_id = (auth.uid())::text)
+with check (user_id = (auth.uid())::text);
+
+create policy "Users delete own resumes"
+on resumes for delete to authenticated
+using (user_id = (auth.uid())::text);
+
+create policy "Users read own applications"
+on applications for select to authenticated
+using (user_id = (auth.uid())::text);
+
+create policy "Users insert own applications"
+on applications for insert to authenticated
+with check (user_id = (auth.uid())::text);
+
+create policy "Users update own applications"
+on applications for update to authenticated
+using (user_id = (auth.uid())::text)
+with check (user_id = (auth.uid())::text);
+
+create policy "Users delete own applications"
+on applications for delete to authenticated
+using (user_id = (auth.uid())::text);
+
+create policy "Users see own digest jobs"
+on digest_jobs for select to authenticated
+using (user_id = (auth.uid())::text);
 
 -- Storage bucket for resumes
 insert into storage.buckets (id, name, public)
 values ('resumes', 'resumes', false)
 on conflict do nothing;
+
+insert into storage.buckets (id, name, public)
+values ('tailored-resumes', 'tailored-resumes', false)
+on conflict do nothing;
+
+create policy "Users read own resume objects"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'resumes'
+  and (storage.foldername(name))[1] = (auth.uid())::text
+);
+
+create policy "Users insert own resume objects"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'resumes'
+  and (storage.foldername(name))[1] = (auth.uid())::text
+);
+
+create policy "Users update own resume objects"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'resumes'
+  and (storage.foldername(name))[1] = (auth.uid())::text
+)
+with check (
+  bucket_id = 'resumes'
+  and (storage.foldername(name))[1] = (auth.uid())::text
+);
+
+create policy "Users delete own resume objects"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'resumes'
+  and (storage.foldername(name))[1] = (auth.uid())::text
+);
