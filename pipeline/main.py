@@ -38,10 +38,12 @@ from scorer import filter_and_rank
 from tailor import tailor_job, generate_note
 from digest import send_digest
 from notifier import _parse_posted_at, _minutes_ago
+from resume_text import extract_resume_keywords, extract_resume_text
 
 SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
+ENABLE_ADVANCED_ACTIONS = os.environ.get("ENABLE_ADVANCED_ACTIONS", "false").lower() == "true"
 
 MAX_JOBS_PER_USER = 20
 FRESHNESS_HOURS = 48
@@ -81,7 +83,7 @@ def _backfill_user_from_clerk(db, user_id: str) -> dict | None:
         return None
 
 
-def run(on_step=None, send_digest_email: bool = True):
+def run(on_step=None, send_digest_email: bool = True, target_user_id: str | None = None):
     """
     Run the full pipeline. Optional on_step(msg: str) callback receives
     human-readable status updates at each key stage.
@@ -103,6 +105,8 @@ def run(on_step=None, send_digest_email: bool = True):
     # Get all users who have set preferences
     prefs_res = db.table("preferences").select("*").execute()
     all_prefs = prefs_res.data or []
+    if target_user_id:
+        all_prefs = [prefs for prefs in all_prefs if prefs.get("user_id") == target_user_id]
     _step(f"Starting — {len(all_prefs)} user(s) found")
 
     for prefs in all_prefs:
@@ -143,10 +147,34 @@ def run(on_step=None, send_digest_email: bool = True):
             logger.warning(f"No jobs found for user {user_id}")
             continue
 
+        # 2. Get user's resume text before scoring so resume keywords can influence ranking
+        resume_res = (
+            db.table("resumes")
+            .select("file_path,file_name")
+            .eq("user_id", user_id)
+            .order("uploaded_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        resume_data = resume_res.data[0] if resume_res.data else None
+        resume_text = ""
+
+        if resume_data:
+            try:
+                file_bytes = db.storage.from_("resumes").download(resume_data["file_path"])
+                resume_text = extract_resume_text(file_bytes, resume_data.get("file_name", ""))
+            except Exception as e:
+                logger.warning(f"Could not load resume for {user_id}: {e}")
+
+        prefs_for_scoring = dict(prefs)
+        resume_keywords = extract_resume_keywords(resume_text)
+        if resume_keywords:
+            prefs_for_scoring["resume_keywords"] = ", ".join(resume_keywords)
+
         _step(f"Scoring {len(raw_jobs)} jobs")
 
-        # 2. Score + filter
-        ranked = filter_and_rank(raw_jobs, prefs)
+        # 3. Score + filter
+        ranked = filter_and_rank(raw_jobs, prefs_for_scoring)
         if not ranked:
             logger.info(f"No qualifying jobs for user {user_id}")
             continue
@@ -158,19 +186,13 @@ def run(on_step=None, send_digest_email: bool = True):
             key = (
                 (job.get("company") or "").lower().strip(),
                 (job.get("title") or "").lower().strip(),
-                (job.get("url") or "").lower().strip(),
+                ((job.get("url") or job.get("display_url") or "")).lower().strip(),
             )
             if key not in seen_jobs:
                 seen_jobs.add(key)
                 deduped.append(job)
         ranked = deduped
 
-        # Sort: direct ATS URLs (auto-applicable) first, aggregator/unknown last
-        _ATS_HOSTS = ("greenhouse.io", "lever.co", "ashby.com", "workable.com", "teamtailor.com")
-        def _ats_priority(job):
-            url = (job.get("url") or "").lower()
-            return 0 if any(h in url for h in _ATS_HOSTS) else 1
-        ranked.sort(key=_ats_priority)
         logger.info(f"After dedup: {len(ranked)} unique jobs")
 
         # Freshness filter: only keep jobs posted within FRESHNESS_HOURS
@@ -190,31 +212,9 @@ def run(on_step=None, send_digest_email: bool = True):
         else:
             logger.info(f"Freshness filter: no jobs within {FRESHNESS_HOURS}h — keeping all {len(ranked)}")
 
-        # 3. Get user's resume text
-        resume_res = (
-            db.table("resumes")
-            .select("file_path,file_name")
-            .eq("user_id", user_id)
-            .order("uploaded_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-        resume_data = resume_res.data[0] if resume_res.data else None
-        resume_text = ""
-
-        if resume_data:
-            # Download resume text from Supabase Storage
-            try:
-                file_bytes = db.storage.from_("resumes").download(resume_data["file_path"])
-                resume_text = file_bytes.decode("utf-8", errors="ignore")
-            except Exception as e:
-                logger.warning(f"Could not load resume for {user_id}: {e}")
-
-        _step(f"Tailoring resume for top {min(TOP_TAILOR_COUNT, len(ranked))} matches")
-
-        # 4. Tailor resume for top matches
-        for i, job in enumerate(ranked[:TOP_TAILOR_COUNT]):
-            if resume_text:
+        if ENABLE_ADVANCED_ACTIONS and resume_text:
+            _step(f"Tailoring resume for top {min(TOP_TAILOR_COUNT, len(ranked))} matches")
+            for i, job in enumerate(ranked[:TOP_TAILOR_COUNT]):
                 try:
                     tailor_result = tailor_job(resume_text, job)
                     ranked[i]["tailored_resume"] = tailor_result.get("resume_markdown", resume_text)

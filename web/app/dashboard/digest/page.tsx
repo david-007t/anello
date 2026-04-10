@@ -2,8 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import TailorButton from "./TailorButton";
-import ApplyButton from "./ApplyButton";
 import RunDigestButton from "./RunDigestButton";
 import ClearDigestButton from "./ClearDigestButton";
 
@@ -62,23 +60,7 @@ function groupJobs(jobs: DigestJob[]): GroupedJob[] {
   return Array.from(map.values());
 }
 
-function detectAts(url: string): "greenhouse" | "lever" | "ashby" | "workable" | "workday" | "unknown" {
-  if (!url) return "unknown";
-  const u = url.toLowerCase();
-  if (u.includes("boards.greenhouse.io") || u.includes("greenhouse.io/jobs")) return "greenhouse";
-  if (u.includes("jobs.lever.co")) return "lever";
-  if (u.includes("jobs.ashby.com")) return "ashby";
-  if (u.includes("apply.workable.com")) return "workable";
-  if (u.includes(".myworkdayjobs.com") || u.includes("workday.com")) return "workday";
-  return "unknown";
-}
-
-function canAutoApply(url: string): boolean {
-  const ats = detectAts(url);
-  return ats === "greenhouse" || ats === "lever" || ats === "ashby" || ats === "workable";
-}
-
-function JobCard({ job, index, showApply }: { job: GroupedJob; index: number; showApply: boolean }) {
+function JobCard({ job, index }: { job: GroupedJob; index: number }) {
   return (
     <div className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start gap-4">
       <span className="text-2xl font-black text-slate-300 select-none w-8 shrink-0 leading-none mt-0.5">
@@ -129,19 +111,14 @@ function JobCard({ job, index, showApply }: { job: GroupedJob; index: number; sh
           </p>
         )}
         <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <TailorButton jobId={job.id} jobNumber={index + 1} />
-          {showApply ? (
-            <ApplyButton jobId={job.id} />
-          ) : (
-            <a
-              href={job.job_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap"
-            >
-              Open Job
-            </a>
-          )}
+          <a
+            href={job.job_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap"
+          >
+            Open Job
+          </a>
         </div>
       </div>
       <span className="text-xs text-slate-400 whitespace-nowrap mt-0.5 shrink-0">
@@ -167,8 +144,6 @@ export default async function DigestPage() {
   }
 
   const grouped = groupJobs(jobs);
-  const autoApplyJobs = grouped.filter((j) => canAutoApply(j.job_url));
-  const manualJobs = grouped.filter((j) => !canAutoApply(j.job_url));
 
   return (
     <div className="p-8">
@@ -195,37 +170,19 @@ export default async function DigestPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-8 max-w-2xl">
-          {autoApplyJobs.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-sm font-semibold text-slate-700">Auto-Apply</h2>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                  {autoApplyJobs.length} job{autoApplyJobs.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className="flex flex-col gap-3">
-                {autoApplyJobs.map((job, index) => (
-                  <JobCard key={job.id} job={job} index={index} showApply={true} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {manualJobs.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-sm font-semibold text-slate-700">Apply Manually</h2>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
-                  {manualJobs.length} job{manualJobs.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className="flex flex-col gap-3">
-                {manualJobs.map((job, index) => (
-                  <JobCard key={job.id} job={job} index={index} showApply={false} />
-                ))}
-              </div>
-            </section>
-          )}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-slate-700">Today&apos;s Matches</h2>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                {grouped.length} job{grouped.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {grouped.map((job, index) => (
+                <JobCard key={job.id} job={job} index={index} />
+              ))}
+            </div>
+          </section>
         </div>
       )}
     </div>

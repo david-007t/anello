@@ -18,7 +18,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent / ".env")
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client
@@ -29,11 +29,13 @@ from resume_to_pdf import parse_resume_md, md_to_html_resume
 from validate import validate_job
 from drafter import draft_message
 from apply import detect_ats, apply_to_job
+from resume_text import extract_resume_text
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI()
+ENABLE_ADVANCED_ACTIONS = os.environ.get("ENABLE_ADVANCED_ACTIONS", "false").lower() == "true"
 
 # Pipeline state — updated by background thread, read by /status
 _pipeline_state: dict = {
@@ -43,6 +45,7 @@ _pipeline_state: dict = {
     "finished_at": None,
     "error": None,
 }
+_pipeline_state_by_user: dict[str, dict] = {}
 
 # Daily pipeline run at 14:00 UTC (replaces railway.toml cronSchedule)
 _scheduler = BackgroundScheduler()
@@ -74,6 +77,20 @@ SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 def get_db():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+def _get_user_job_or_404(db, job_id: str, user_id: str) -> dict:
+    job_res = (
+        db.table("digest_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    if not job_res.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job_res.data[0]
 
 
 def _cover_letter_to_html(text: str) -> str:
@@ -122,13 +139,11 @@ def health():
 
 @app.post("/tailor")
 def tailor_endpoint(req: TailorRequest):
-    db = get_db()
+    if not ENABLE_ADVANCED_ACTIONS:
+        raise HTTPException(status_code=403, detail="Tailoring is disabled during early access.")
 
-    # 1. Fetch job from digest_jobs
-    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
-    if not job_res.data:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = job_res.data[0]
+    db = get_db()
+    job = _get_user_job_or_404(db, req.job_id, req.user_id)
 
     # Map digest_jobs columns to what tailor_job expects
     job_for_tailor = {
@@ -152,10 +167,7 @@ def tailor_endpoint(req: TailorRequest):
     resume_path = resume_res.data[0]["file_path"]
     try:
         file_bytes = db.storage.from_("resumes").download(resume_path)
-        import io
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(file_bytes))
-        resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        resume_text = extract_resume_text(file_bytes, resume_res.data[0].get("file_name", ""))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
 
@@ -265,13 +277,11 @@ class DraftRequest(BaseModel):
 
 @app.post("/draft")
 def draft_endpoint(req: DraftRequest):
-    db = get_db()
+    if not ENABLE_ADVANCED_ACTIONS:
+        raise HTTPException(status_code=403, detail="Drafting is disabled during early access.")
 
-    # 1. Fetch job from digest_jobs
-    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
-    if not job_res.data:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = job_res.data[0]
+    db = get_db()
+    job = _get_user_job_or_404(db, req.job_id, req.user_id)
 
     job_for_draft = {
         "title": job.get("role", ""),
@@ -293,11 +303,8 @@ def draft_endpoint(req: DraftRequest):
 
     resume_path = resume_res.data[0]["file_path"]
     try:
-        import io
-        from pypdf import PdfReader
         file_bytes = db.storage.from_("resumes").download(resume_path)
-        reader = PdfReader(io.BytesIO(file_bytes))
-        resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        resume_text = extract_resume_text(file_bytes, resume_res.data[0].get("file_name", ""))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not load resume: {e}")
 
@@ -318,13 +325,13 @@ class ApplyRequest(BaseModel):
 @app.post("/apply")
 def apply_endpoint(req: ApplyRequest):
     """Attempt Easy Apply via Playwright for Greenhouse or Lever jobs."""
+    if not ENABLE_ADVANCED_ACTIONS:
+        raise HTTPException(status_code=403, detail="Easy Apply is disabled during early access.")
+
     db = get_db()
 
     # 1. Fetch job
-    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
-    if not job_res.data:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = job_res.data[0]
+    job = _get_user_job_or_404(db, req.job_id, req.user_id)
     job["url"] = job.get("job_url", "")
 
     # 1b. Fetch user preferences and run validation gate
@@ -412,7 +419,7 @@ def apply_endpoint(req: ApplyRequest):
 
         # 6. Mark applied if successful
         if result.get("success"):
-            db.table("digest_jobs").update({"applied": True}).eq("id", req.job_id).execute()
+            db.table("digest_jobs").update({"applied": True}).eq("id", req.job_id).eq("user_id", req.user_id).execute()
 
         return {**result, "job_id": req.job_id, "validate_warnings": validate_warnings}
 
@@ -427,8 +434,16 @@ def apply_endpoint(req: ApplyRequest):
 
 
 @app.get("/status")
-def pipeline_status():
+def pipeline_status(user_id: str | None = Query(default=None)):
     """Return current pipeline run state."""
+    if user_id:
+        return _pipeline_state_by_user.get(user_id, {
+            "status": "idle",
+            "step": "",
+            "started_at": None,
+            "finished_at": None,
+            "error": None,
+        })
     return _pipeline_state
 
 
@@ -465,6 +480,49 @@ def run_pipeline():
             })
 
     threading.Thread(target=_run, daemon=True).start()
+    return {"status": "started"}
+
+
+class UserRunRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/run-user")
+def run_user_pipeline(req: UserRunRequest):
+    state = _pipeline_state_by_user.get(req.user_id, {})
+    if state.get("status") == "running":
+        return {"status": "already_running"}
+
+    _pipeline_state_by_user[req.user_id] = {
+        "status": "running",
+        "step": "Starting…",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "error": None,
+    }
+
+    def _run_user():
+        try:
+            from main import run
+            run(
+                on_step=lambda msg: _pipeline_state_by_user[req.user_id].update({"step": msg}),
+                send_digest_email=True,
+                target_user_id=req.user_id,
+            )
+            _pipeline_state_by_user[req.user_id].update({
+                "status": "complete",
+                "step": "Done",
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            _pipeline_state_by_user[req.user_id].update({
+                "status": "error",
+                "step": str(e),
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "error": str(e),
+            })
+
+    threading.Thread(target=_run_user, daemon=True).start()
     return {"status": "started"}
 
 
@@ -518,13 +576,13 @@ class ValidateRequest(BaseModel):
 @app.post("/validate")
 def validate_endpoint(req: ValidateRequest):
     """Run pre-apply quality gate for a specific job."""
+    if not ENABLE_ADVANCED_ACTIONS:
+        raise HTTPException(status_code=403, detail="Validation is disabled during early access.")
+
     db = get_db()
 
     # Fetch job from digest_jobs
-    job_res = db.table("digest_jobs").select("*").eq("id", req.job_id).limit(1).execute()
-    if not job_res.data:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job = job_res.data[0]
+    job = _get_user_job_or_404(db, req.job_id, req.user_id)
 
     # Fetch user preferences
     prefs_res = (

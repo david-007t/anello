@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { countRecentRequests, logRequest } from "@/lib/request-limits";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +11,31 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
+    const ip = forwardedFor.split(",")[0]?.trim() || "unknown";
+
+    try {
+      const hourAgoIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const dayAgoIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+      const [ipCount, emailCount] = await Promise.all([
+        countRecentRequests({ action: "waitlist", ip, sinceIso: hourAgoIso }),
+        countRecentRequests({ action: "waitlist", email: normalizedEmail, sinceIso: dayAgoIso }),
+      ]);
+
+      if (ipCount >= 10 || emailCount >= 3) {
+        return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      }
+    } catch (error) {
+      console.error("[waitlist] rate limit check failed:", error);
+    }
+
+    try {
+      await logRequest({ action: "waitlist", ip, email: normalizedEmail });
+      await supabaseAdmin().from("waitlist").upsert({ email: normalizedEmail }, { onConflict: "email" });
+    } catch (error) {
+      console.error("[waitlist] logging failed:", error);
+    }
 
     // --- Resend integration ---
     // Set RESEND_API_KEY in your Vercel environment variables.

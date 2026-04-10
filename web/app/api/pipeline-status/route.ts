@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ status: "idle", step: "", started_at: null, finished_at: null, error: null });
   }
 
-  const res = await fetch(`${PIPELINE_URL}/status`, { cache: "no-store" });
+  const res = await fetch(`${PIPELINE_URL}/status?user_id=${encodeURIComponent(userId)}`, { cache: "no-store" });
   if (!res.ok) {
     return NextResponse.json({ status: "idle", step: "", started_at: null, finished_at: null, error: null });
   }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 
 type PipelineStatus = "idle" | "running" | "complete" | "error";
 
@@ -16,7 +15,6 @@ interface StatusPayload {
 export default function RunDigestButton() {
   const [status, setStatus] = useState<PipelineStatus>("idle");
   const [step, setStep] = useState("");
-  const router = useRouter();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasSeenRunning = useRef(false);
 
@@ -73,11 +71,17 @@ export default function RunDigestButton() {
     setStep("Starting…");
     try {
       const res = await fetch("/api/run-digest", { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to start digest");
+      }
+      if (data.status === "already_running") {
+        setStep("Your digest is already running.");
+      }
       startPolling();
-    } catch {
+    } catch (error) {
       setStatus("error");
-      setStep("Failed to start pipeline");
+      setStep(error instanceof Error ? error.message : "Failed to start pipeline");
       setTimeout(() => {
         setStatus("idle");
         setStep("");

@@ -7,10 +7,12 @@ import re
 import json
 import logging
 import anthropic
+from resume_text import sanitize_untrusted_job_text
 
 logger = logging.getLogger(__name__)
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
 MODEL = "claude-sonnet-4-6"
+ENABLE_ADVANCED_ACTIONS = os.environ.get("ENABLE_ADVANCED_ACTIONS", "false").lower() == "true"
 
 LINKEDIN_CONNECTION_CHAR_LIMIT = 300
 
@@ -64,9 +66,12 @@ def draft_message(resume_text: str, job: dict, message_type: str = "linkedin_con
         "warnings": list,    # any constraint violations
     }
     """
+    if not ENABLE_ADVANCED_ACTIONS:
+        raise RuntimeError("Advanced drafting is disabled during early access.")
+
     title = job.get("title", job.get("role", ""))
     company = job.get("company", "")
-    description = (job.get("description", "") or "")[:2000]
+    description = sanitize_untrusted_job_text(job.get("description", ""), max_chars=2000)
 
     type_instruction = {
         "linkedin_connection": (

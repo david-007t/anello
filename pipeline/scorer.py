@@ -22,13 +22,15 @@ def score_job(job: dict, prefs: dict) -> int:
     """
     score = 0
     text = f"{job.get('title') or ''} {job.get('description') or ''}".lower()
+    normalized_text = re.sub(r"[^a-z0-9+#.\s]", " ", text)
+    text_tokens = set(token for token in normalized_text.split() if token)
 
     # Skills match
     skills_raw = prefs.get("skills") or ""
     if skills_raw:
         skills = [s.strip().lower() for s in re.split(r"[,;]", skills_raw) if s.strip()]
-        matched = sum(1 for s in skills if s in text)
-        score += int((matched / max(len(skills), 1)) * 50)
+        matched = sum(1 for s in skills if s in text or all(part in text_tokens for part in s.split()))
+        score += int((matched / max(len(skills), 1)) * 30)
 
     # Role match — check all 3 roles
     roles = [
@@ -36,8 +38,18 @@ def score_job(job: dict, prefs: dict) -> int:
         (prefs.get("role_2") or "").lower(),
         (prefs.get("role_3") or "").lower(),
     ]
-    if any(r and r in text for r in roles):
-        score += 30
+    if any(r and (r in text or all(part in text_tokens for part in r.split())) for r in roles):
+        score += 35
+
+    # Resume keyword match
+    resume_keywords_raw = prefs.get("resume_keywords") or ""
+    if resume_keywords_raw:
+        resume_keywords = [s.strip().lower() for s in re.split(r"[,;]", resume_keywords_raw) if s.strip()]
+        matched_resume = sum(
+            1 for keyword in resume_keywords
+            if keyword in text or all(part in text_tokens for part in keyword.split())
+        )
+        score += min(25, int((matched_resume / max(len(resume_keywords), 1)) * 35))
 
     # Company type match
     company_types = (prefs.get("company_types") or "").lower()
@@ -45,7 +57,7 @@ def score_job(job: dict, prefs: dict) -> int:
         types = [t.strip() for t in re.split(r"[,;]", company_types) if t.strip()]
         company_text = (job.get("company") or "").lower()
         if any(t in company_text or t in text for t in types):
-            score += 20
+            score += 10
 
     return min(score, 100)
 

@@ -85,6 +85,17 @@ create table if not exists waitlist (
   created_at timestamptz default now()
 );
 
+-- Request logs for rate limiting and abuse monitoring
+create table if not exists request_logs (
+  id uuid primary key default gen_random_uuid(),
+  action text not null,
+  user_id text,
+  email text,
+  ip text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now()
+);
+
 -- RLS: users can only read/write their own data
 alter table resumes enable row level security;
 alter table preferences enable row level security;
