@@ -1,12 +1,12 @@
 'use client';
 
-import { useClerk, useAuth } from '@clerk/nextjs';
+import { useSignIn, useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ContinueWithGoogle() {
   const { isSignedIn } = useAuth();
-  const clerk = useClerk();
+  const { signIn } = useSignIn();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -16,19 +16,20 @@ export default function ContinueWithGoogle() {
       router.push('/already-signed-in');
       return;
     }
-    if (!clerk.client?.signIn) return;
+    if (!signIn) return;
     setLoading(true);
     setError('');
 
     const origin = window.location.origin;
     try {
-      await clerk.client.signIn.authenticateWithRedirect({
+      const { error: signInError } = await signIn.sso({
         strategy: 'oauth_google',
         redirectUrl: `${origin}/sso-callback`,
-        redirectUrlComplete: `${origin}/already-signed-in`,
-        continueSignUp: true,
-        continueSignIn: true,
+        redirectCallbackUrl: `${origin}/already-signed-in`,
       });
+
+      if (!signInError) return;
+      throw signInError;
     } catch {
       setLoading(false);
       setError('Something went wrong. Try again.');
