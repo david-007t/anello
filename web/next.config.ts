@@ -8,11 +8,19 @@ const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
+      "default-src 'self'",
       "base-uri 'self'",
+      "connect-src 'self' https://clerk.anelo.io https://vercel.live https://accounts.google.com https://www.google.com",
       "form-action 'self'",
       "frame-ancestors 'none'",
+      "frame-src 'self' https://clerk.anelo.io https://accounts.google.com",
+      "img-src 'self' data: blob: https:",
       "object-src 'none'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.anelo.io https://vercel.live https://accounts.google.com https://www.google.com https://apis.google.com",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data: https:",
       "upgrade-insecure-requests",
+      "worker-src 'self' blob:",
     ].join("; "),
   },
 ];
