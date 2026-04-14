@@ -1,39 +1,21 @@
 'use client';
 
-import { useSignIn, useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ContinueWithGoogle() {
   const { isSignedIn } = useAuth();
-  const { signIn } = useSignIn();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   async function handleClick() {
     if (isSignedIn) {
       router.push('/already-signed-in');
       return;
     }
-    if (!signIn) return;
     setLoading(true);
-    setError('');
-
-    const origin = window.location.origin;
-    try {
-      const { error: signInError } = await signIn.sso({
-        strategy: 'oauth_google',
-        redirectUrl: `${origin}/sso-callback`,
-        redirectCallbackUrl: `${origin}/already-signed-in`,
-      });
-
-      if (!signInError) return;
-      throw signInError;
-    } catch {
-      setLoading(false);
-      setError('Something went wrong. Try again.');
-    }
+    router.push('/sign-up');
   }
 
   return (
@@ -60,7 +42,6 @@ export default function ContinueWithGoogle() {
         )}
         <span>{loading ? 'Redirecting\u2026' : 'Continue with Google'}</span>
       </button>
-      {error && <p className="text-xs text-red-400">{error}</p>}
       <p className="text-xs text-white/50">Free during early access · No credit card required</p>
     </div>
   );
