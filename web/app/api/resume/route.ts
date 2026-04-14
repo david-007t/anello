@@ -15,7 +15,8 @@ export async function GET() {
     .single();
 
   if (error && error.code !== "PGRST116") {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[resume GET] Supabase error:", error);
+    return NextResponse.json({ error: "Could not load resume" }, { status: 500 });
   }
 
   return NextResponse.json({ data: data || null });

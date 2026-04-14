@@ -11,6 +11,9 @@ export async function POST() {
     .delete()
     .eq("user_id", userId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[clear-digest] Supabase error:", error);
+    return NextResponse.json({ error: "Could not clear digest" }, { status: 500 });
+  }
   return NextResponse.json({ status: "cleared" });
 }

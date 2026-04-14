@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("[preferences POST] Supabase error:", JSON.stringify(error));
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Could not save preferences" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
@@ -31,7 +31,8 @@ export async function GET() {
     .single();
 
   if (error && error.code !== "PGRST116") {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[preferences GET] Supabase error:", JSON.stringify(error));
+    return NextResponse.json({ error: "Could not load preferences" }, { status: 500 });
   }
 
   return NextResponse.json({ data: data || null });

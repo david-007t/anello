@@ -27,15 +27,23 @@ export async function POST(req: NextRequest) {
     .from("resumes")
     .upload(path, bytes, { contentType: file.type, upsert: true });
 
-  if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  if (uploadError) {
+    console.error("[resume upload] Storage error:", uploadError);
+    return NextResponse.json({ error: "Could not upload resume" }, { status: 500 });
+  }
 
   // Record in DB
-  await supabaseAdmin().from("resumes").upsert({
+  const { error: recordError } = await supabaseAdmin().from("resumes").upsert({
     user_id: userId,
     file_path: path,
     file_name: file.name,
     uploaded_at: new Date().toISOString(),
   });
+
+  if (recordError) {
+    console.error("[resume upload] DB error:", recordError);
+    return NextResponse.json({ error: "Could not save resume" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, path });
 }
