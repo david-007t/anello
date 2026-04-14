@@ -1,13 +1,17 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { enforceSameOrigin } from "@/lib/api-security";
 import { countRecentRequests, logRequest } from "@/lib/request-limits";
 
 const PIPELINE_URL = process.env.PIPELINE_URL ?? "";
 const DAILY_RUN_LIMIT = 3;
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const originError = enforceSameOrigin(req);
+  if (originError) return originError;
 
   if (!PIPELINE_URL) {
     return NextResponse.json({ error: "PIPELINE_URL not configured" }, { status: 500 });
@@ -49,7 +53,8 @@ export async function POST() {
 
   if (!res.ok) {
     const err = await res.text();
-    return NextResponse.json({ error: err }, { status: res.status });
+    console.error("[run-digest] pipeline error:", err);
+    return NextResponse.json({ error: "Could not start digest" }, { status: res.status });
   }
 
   const data = await res.json();

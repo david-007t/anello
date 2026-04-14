@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceSameOrigin, getClientIp } from "@/lib/api-security";
 import { countRecentRequests, logRequest } from "@/lib/request-limits";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
+    const originError = enforceSameOrigin(req);
+    if (originError) return originError;
+
     const { email } = await req.json();
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
@@ -11,8 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
-    const ip = forwardedFor.split(",")[0]?.trim() || "unknown";
+    const ip = getClientIp(req);
 
     try {
       const hourAgoIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
